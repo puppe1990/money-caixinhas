@@ -3,6 +3,7 @@ import { Delete } from 'lucide-react'
 
 import {
   INITIAL_CALCULATOR_DISPLAY,
+  applyEqualsToDisplay,
   backspaceCalculatorDisplay,
   calculatorResultToMoneyInput,
   evaluateCalculatorDisplay,
@@ -16,7 +17,7 @@ type CalculatorModalProps = {
   onApply: (value: string) => void
 }
 
-type KeypadKey = CalculatorKey | 'backspace'
+type KeypadKey = CalculatorKey | 'backspace' | 'equals'
 
 type KeypadButton =
   | { type: 'key'; key: KeypadKey; colSpan?: 1 | 2 }
@@ -46,23 +47,27 @@ const KEYPAD_ROWS: KeypadButton[][] = [
     { type: 'key', key: '4' },
     { type: 'key', key: '5' },
     { type: 'key', key: '6' },
-    { type: 'spacer' },
+    { type: 'key', key: '+' },
   ],
   [
     { type: 'key', key: '1' },
     { type: 'key', key: '2' },
     { type: 'key', key: '3' },
-    { type: 'key', key: '+' },
   ],
   [
     { type: 'key', key: '0', colSpan: 2 },
     { type: 'key', key: '.' },
+    { type: 'key', key: 'equals' },
   ],
 ]
 
 function getKeyLabel(key: KeypadKey): string {
   if (key === 'backspace') {
     return 'Apagar último dígito'
+  }
+
+  if (key === 'equals') {
+    return 'Calcular'
   }
 
   if (key === '+' || key === '-' || key === '*' || key === '/') {
@@ -79,6 +84,10 @@ function getKeyDisplay(key: KeypadKey): string {
 
   if (key === '/') {
     return '÷'
+  }
+
+  if (key === 'equals') {
+    return '='
   }
 
   return key
@@ -107,6 +116,19 @@ export function CalculatorModal({
 
   function handleKeyPress(key: KeypadKey) {
     setError(null)
+
+    if (key === 'equals') {
+      try {
+        setDisplay((current) => applyEqualsToDisplay(current))
+      } catch (caught) {
+        setError(
+          caught instanceof Error
+            ? caught.message
+            : 'Não foi possível calcular',
+        )
+      }
+      return
+    }
 
     if (key === 'backspace') {
       setDisplay((current) => backspaceCalculatorDisplay(current))
@@ -185,6 +207,7 @@ export function CalculatorModal({
                 key === '+' || key === '-' || key === '*' || key === '/'
               const isClear = key === 'C'
               const isBackspace = key === 'backspace'
+              const isEquals = key === 'equals'
 
               return (
                 <button
@@ -192,13 +215,15 @@ export function CalculatorModal({
                   type="button"
                   onClick={() => handleKeyPress(key)}
                   className={`flex h-12 items-center justify-center rounded-xl border text-base font-semibold transition-colors ${
-                    isClear
-                      ? 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100'
-                      : isBackspace
-                        ? 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                        : isOperator
-                          ? 'border-slate-300 bg-slate-100 text-slate-800 hover:bg-slate-200'
-                          : 'border-slate-200 bg-white text-slate-900 hover:bg-slate-50'
+                    isEquals
+                      ? 'border-emerald-700 bg-emerald-600 text-white hover:bg-emerald-700'
+                      : isClear
+                        ? 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100'
+                        : isBackspace
+                          ? 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                          : isOperator
+                            ? 'border-slate-300 bg-slate-100 text-slate-800 hover:bg-slate-200'
+                            : 'border-slate-200 bg-white text-slate-900 hover:bg-slate-50'
                   } ${colSpan === 2 ? 'col-span-2' : ''}`}
                   aria-label={getKeyLabel(key)}
                 >

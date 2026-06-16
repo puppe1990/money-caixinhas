@@ -224,6 +224,23 @@ function evaluateTokens(tokens: Token[]): number {
   return values[0]
 }
 
+export function formatCalculatorDisplayResult(result: number): string {
+  if (!Number.isFinite(result)) {
+    throw new Error('Resultado inválido')
+  }
+
+  if (Number.isInteger(result)) {
+    return String(result)
+  }
+
+  return Number(result.toFixed(8)).toString()
+}
+
+export function applyEqualsToDisplay(display: string): string {
+  const result = evaluateCalculatorDisplay(display)
+  return formatCalculatorDisplayResult(result)
+}
+
 export function evaluateCalculatorDisplay(display: string): number {
   if (!display || display === INITIAL_CALCULATOR_DISPLAY) {
     throw new Error('Expressão inválida')

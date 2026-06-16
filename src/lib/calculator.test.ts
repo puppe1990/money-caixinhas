@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   INITIAL_CALCULATOR_DISPLAY,
+  applyEqualsToDisplay,
   backspaceCalculatorDisplay,
   calculatorResultToMoneyInput,
   clearCalculatorDisplay,
@@ -52,6 +53,18 @@ describe('pressCalculatorKey', () => {
 
   it('limpa o display com clearCalculatorDisplay', () => {
     expect(clearCalculatorDisplay()).toBe(INITIAL_CALCULATOR_DISPLAY)
+  })
+})
+
+describe('applyEqualsToDisplay', () => {
+  it('calcula a expressão e mostra o resultado no display', () => {
+    expect(applyEqualsToDisplay('250+125')).toBe('375')
+    expect(applyEqualsToDisplay('10/4')).toBe('2.5')
+    expect(applyEqualsToDisplay('100-25')).toBe('75')
+  })
+
+  it('rejeita expressões inválidas', () => {
+    expect(() => applyEqualsToDisplay('abc')).toThrow('Expressão inválida')
   })
 })
 
