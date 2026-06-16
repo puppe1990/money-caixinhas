@@ -235,16 +235,15 @@ export async function listCaixinhasWithProgress(
   })
 }
 
-export async function listDepositosByCaixinha(db: Database, caixinhaId: number) {
+export async function listDepositosByCaixinha(
+  db: Database,
+  caixinhaId: number,
+) {
   return db
     .select()
     .from(depositos)
     .where(eq(depositos.caixinhaId, caixinhaId))
-    .orderBy(
-      asc(depositos.year),
-      asc(depositos.month),
-      asc(depositos.day),
-    )
+    .orderBy(asc(depositos.year), asc(depositos.month), asc(depositos.day))
 }
 
 export async function listHistoricoTransacoes(

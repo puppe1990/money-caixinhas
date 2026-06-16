@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useHydrated } from '@tanstack/react-router'
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { useState } from 'react'
 
@@ -15,7 +16,10 @@ import {
   periodLabel,
   shiftPeriod,
 } from '#/lib/caixinhas/domain'
-import type { CaixinhaProgress, TransacaoHistorico } from '#/lib/caixinhas/types'
+import type {
+  CaixinhaProgress,
+  TransacaoHistorico,
+} from '#/lib/caixinhas/types'
 import {
   addDepositoFn,
   createCaixinhaFn,
@@ -39,6 +43,7 @@ function currentPeriod() {
 
 export function CaixinhasApp() {
   const queryClient = useQueryClient()
+  const hydrated = useHydrated()
   const period = currentPeriod()
   const [viewMonth, setViewMonth] = useState(period.month)
   const [viewYear, setViewYear] = useState(period.year)
@@ -48,7 +53,9 @@ export function CaixinhasApp() {
     useState<CaixinhaProgress | null>(null)
   const [editingTransacao, setEditingTransacao] =
     useState<TransacaoHistorico | null>(null)
-  const [novaCaixinhaError, setNovaCaixinhaError] = useState<string | null>(null)
+  const [novaCaixinhaError, setNovaCaixinhaError] = useState<string | null>(
+    null,
+  )
   const [depositoError, setDepositoError] = useState<string | null>(null)
   const [modalError, setModalError] = useState<string | null>(null)
   const [transacaoModalError, setTransacaoModalError] = useState<string | null>(
@@ -85,7 +92,9 @@ export function CaixinhasApp() {
       setDepositoError(null)
       setShowDepositoModal(false)
       await queryClient.invalidateQueries({ queryKey: ['caixinhas'] })
-      await queryClient.invalidateQueries({ queryKey: ['historico-transacoes'] })
+      await queryClient.invalidateQueries({
+        queryKey: ['historico-transacoes'],
+      })
     },
     onError: (err) => {
       setDepositoError(
@@ -100,7 +109,9 @@ export function CaixinhasApp() {
       setModalError(null)
       setEditingCaixinha(null)
       await queryClient.invalidateQueries({ queryKey: ['caixinhas'] })
-      await queryClient.invalidateQueries({ queryKey: ['historico-transacoes'] })
+      await queryClient.invalidateQueries({
+        queryKey: ['historico-transacoes'],
+      })
     },
     onError: (err) => {
       setModalError(
@@ -115,7 +126,9 @@ export function CaixinhasApp() {
       setModalError(null)
       setEditingCaixinha(null)
       await queryClient.invalidateQueries({ queryKey: ['caixinhas'] })
-      await queryClient.invalidateQueries({ queryKey: ['historico-transacoes'] })
+      await queryClient.invalidateQueries({
+        queryKey: ['historico-transacoes'],
+      })
     },
     onError: (err) => {
       setModalError(
@@ -130,7 +143,9 @@ export function CaixinhasApp() {
       setTransacaoModalError(null)
       setEditingTransacao(null)
       await queryClient.invalidateQueries({ queryKey: ['caixinhas'] })
-      await queryClient.invalidateQueries({ queryKey: ['historico-transacoes'] })
+      await queryClient.invalidateQueries({
+        queryKey: ['historico-transacoes'],
+      })
     },
     onError: (err) => {
       setTransacaoModalError(
@@ -145,7 +160,9 @@ export function CaixinhasApp() {
       setTransacaoModalError(null)
       setEditingTransacao(null)
       await queryClient.invalidateQueries({ queryKey: ['caixinhas'] })
-      await queryClient.invalidateQueries({ queryKey: ['historico-transacoes'] })
+      await queryClient.invalidateQueries({
+        queryKey: ['historico-transacoes'],
+      })
     },
     onError: (err) => {
       setTransacaoModalError(
@@ -275,7 +292,10 @@ export function CaixinhasApp() {
   }
 
   function closeEditTransacaoModal() {
-    if (updateTransacaoMutation.isPending || deleteTransacaoMutation.isPending) {
+    if (
+      updateTransacaoMutation.isPending ||
+      deleteTransacaoMutation.isPending
+    ) {
       return
     }
     setTransacaoModalError(null)
@@ -407,7 +427,7 @@ export function CaixinhasApp() {
                   {formatCurrency(visibleGroup.totalTargetCents)} ·{' '}
                   {visibleGroup.totalPercent}%
                 </span>
-                {dailyGoal ? (
+                {hydrated && dailyGoal ? (
                   <span className="rounded-full bg-amber-50 px-3 py-1 text-sm font-medium text-amber-800">
                     {dailyGoal.dailyGoalCents === 0
                       ? 'Meta diária: concluída'

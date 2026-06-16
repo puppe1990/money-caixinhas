@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 
-import {
-  formatCentsToMoneyInput,
-  periodLabel,
-} from '#/lib/caixinhas/domain'
-import type { CaixinhaProgress, TransacaoHistorico } from '#/lib/caixinhas/types'
+import { formatCentsToMoneyInput, periodLabel } from '#/lib/caixinhas/domain'
+import type {
+  CaixinhaProgress,
+  TransacaoHistorico,
+} from '#/lib/caixinhas/types'
+
+import { MoneyInputWithCalculator } from './MoneyInputWithCalculator'
 
 const MONTHS = [
   { value: 1, label: 'Janeiro' },
@@ -163,15 +165,20 @@ export function EditTransacaoModal({
             </select>
           </label>
 
-          <label className="block space-y-1 text-sm">
-            <span className="font-medium text-slate-700">Valor (R$)</span>
-            <input
-              className="w-full rounded-lg border border-slate-300 px-3 py-2"
+          <div className="block space-y-1 text-sm">
+            <label
+              htmlFor="transacao-valor"
+              className="font-medium text-slate-700"
+            >
+              Valor (R$)
+            </label>
+            <MoneyInputWithCalculator
+              id="transacao-valor"
               value={amount}
-              onChange={(event) => setAmount(event.target.value)}
+              onChange={setAmount}
               required
             />
-          </label>
+          </div>
 
           <div className="grid grid-cols-3 gap-3">
             <label className="block space-y-1 text-sm">

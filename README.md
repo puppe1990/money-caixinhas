@@ -50,12 +50,12 @@ Cobertura atual:
 
 ## Scripts úteis
 
-| Comando | Descrição |
-|---------|-----------|
-| `npm run dev` | Servidor de desenvolvimento |
-| `npm run test` | Testes Vitest |
-| `npm run db:push` | Sincroniza schema com o banco |
-| `npm run db:studio` | Drizzle Studio |
+| Comando             | Descrição                     |
+| ------------------- | ----------------------------- |
+| `npm run dev`       | Servidor de desenvolvimento   |
+| `npm run test`      | Testes Vitest                 |
+| `npm run db:push`   | Sincroniza schema com o banco |
+| `npm run db:studio` | Drizzle Studio                |
 
 ## Estrutura
 

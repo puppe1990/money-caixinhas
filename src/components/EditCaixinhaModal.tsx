@@ -1,9 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import {
-  formatCentsToMoneyInput,
-  periodLabel,
-} from '#/lib/caixinhas/domain'
+import { formatCentsToMoneyInput, periodLabel } from '#/lib/caixinhas/domain'
 import type { CaixinhaProgress } from '#/lib/caixinhas/types'
 
 const MONTHS = [

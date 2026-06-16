@@ -15,3 +15,6 @@ local.db-*
 
 # Local Netlify folder
 .netlify
+
+# Playwright CLI artifacts
+.playwright-cli

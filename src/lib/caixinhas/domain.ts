@@ -81,10 +81,7 @@ export function calculateProgress(input: {
   const percent =
     input.targetAmountCents === 0
       ? 0
-      : Math.min(
-          100,
-          Math.round((savedCents / input.targetAmountCents) * 100),
-        )
+      : Math.min(100, Math.round((savedCents / input.targetAmountCents) * 100))
 
   return {
     savedCents,
@@ -98,7 +95,11 @@ export function periodLabel(month: number, year: number): string {
   return `${MONTH_LABELS[month - 1]}/${year}`
 }
 
-export function formatDepositDate(day: number, month: number, year: number): string {
+export function formatDepositDate(
+  day: number,
+  month: number,
+  year: number,
+): string {
   const dayLabel = String(day).padStart(2, '0')
   const monthLabel = String(month).padStart(2, '0')
   return `${dayLabel}/${monthLabel}/${year}`
@@ -243,9 +244,9 @@ export function groupCaixinhasByPeriod(
       ...summarizePeriod(group.caixinhas),
     }))
     .sort((a, b) => {
-    if (a.year !== b.year) {
-      return b.year - a.year
-    }
-    return b.month - a.month
-  })
+      if (a.year !== b.year) {
+        return b.year - a.year
+      }
+      return b.month - a.month
+    })
 }
