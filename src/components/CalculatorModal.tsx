@@ -16,6 +16,12 @@ type CalculatorModalProps = {
   onApply: (value: string) => void
 }
 
+type KeypadKey = CalculatorKey | 'backspace'
+
+type KeypadButton =
+  | { type: 'key'; key: KeypadKey; colSpan?: 1 | 2 }
+  | { type: 'spacer' }
+
 const OPERATOR_LABELS: Record<'+' | '-' | '*' | '/', string> = {
   '+': 'Somar',
   '-': 'Subtrair',
@@ -23,25 +29,60 @@ const OPERATOR_LABELS: Record<'+' | '-' | '*' | '/', string> = {
   '/': 'Dividir',
 }
 
-const BUTTONS: Array<CalculatorKey | 'backspace' | 'apply'> = [
-  'C',
-  'backspace',
-  '7',
-  '8',
-  '9',
-  '/',
-  '4',
-  '5',
-  '6',
-  '*',
-  '1',
-  '2',
-  '3',
-  '-',
-  '0',
-  '.',
-  '+',
+const KEYPAD_ROWS: KeypadButton[][] = [
+  [
+    { type: 'key', key: 'C' },
+    { type: 'key', key: 'backspace' },
+    { type: 'key', key: '/' },
+    { type: 'key', key: '*' },
+  ],
+  [
+    { type: 'key', key: '7' },
+    { type: 'key', key: '8' },
+    { type: 'key', key: '9' },
+    { type: 'key', key: '-' },
+  ],
+  [
+    { type: 'key', key: '4' },
+    { type: 'key', key: '5' },
+    { type: 'key', key: '6' },
+    { type: 'spacer' },
+  ],
+  [
+    { type: 'key', key: '1' },
+    { type: 'key', key: '2' },
+    { type: 'key', key: '3' },
+    { type: 'key', key: '+' },
+  ],
+  [
+    { type: 'key', key: '0', colSpan: 2 },
+    { type: 'key', key: '.' },
+  ],
 ]
+
+function getKeyLabel(key: KeypadKey): string {
+  if (key === 'backspace') {
+    return 'Apagar último dígito'
+  }
+
+  if (key === '+' || key === '-' || key === '*' || key === '/') {
+    return OPERATOR_LABELS[key]
+  }
+
+  return key
+}
+
+function getKeyDisplay(key: KeypadKey): string {
+  if (key === '*') {
+    return '×'
+  }
+
+  if (key === '/') {
+    return '÷'
+  }
+
+  return key
+}
 
 export function CalculatorModal({
   open,
@@ -64,7 +105,7 @@ export function CalculatorModal({
     return null
   }
 
-  function handleKeyPress(key: CalculatorKey | 'backspace') {
+  function handleKeyPress(key: KeypadKey) {
     setError(null)
 
     if (key === 'backspace') {
@@ -118,7 +159,7 @@ export function CalculatorModal({
         </div>
 
         <div
-          className="mb-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-right font-mono text-lg text-slate-900"
+          className="mb-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-right font-mono text-2xl text-slate-900"
           aria-live="polite"
         >
           {display}
@@ -127,49 +168,55 @@ export function CalculatorModal({
         {error ? <p className="mb-3 text-sm text-red-600">{error}</p> : null}
 
         <div className="grid grid-cols-4 gap-2">
-          {BUTTONS.map((key) => {
-            if (key === 'backspace') {
+          {KEYPAD_ROWS.flatMap((row, rowIndex) =>
+            row.map((button, buttonIndex) => {
+              if (button.type === 'spacer') {
+                return (
+                  <div
+                    key={`${rowIndex}-spacer-${buttonIndex}`}
+                    aria-hidden="true"
+                    className="h-12"
+                  />
+                )
+              }
+
+              const { key, colSpan = 1 } = button
+              const isOperator =
+                key === '+' || key === '-' || key === '*' || key === '/'
+              const isClear = key === 'C'
+              const isBackspace = key === 'backspace'
+
               return (
                 <button
-                  key={key}
+                  key={`${rowIndex}-${key}-${buttonIndex}`}
                   type="button"
-                  onClick={() => handleKeyPress('backspace')}
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-700 hover:bg-slate-50"
-                  aria-label="Apagar último dígito"
+                  onClick={() => handleKeyPress(key)}
+                  className={`flex h-12 items-center justify-center rounded-xl border text-base font-semibold transition-colors ${
+                    isClear
+                      ? 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100'
+                      : isBackspace
+                        ? 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                        : isOperator
+                          ? 'border-slate-300 bg-slate-100 text-slate-800 hover:bg-slate-200'
+                          : 'border-slate-200 bg-white text-slate-900 hover:bg-slate-50'
+                  } ${colSpan === 2 ? 'col-span-2' : ''}`}
+                  aria-label={getKeyLabel(key)}
                 >
-                  <Delete className="mx-auto h-4 w-4" aria-hidden="true" />
+                  {isBackspace ? (
+                    <Delete className="h-5 w-5" aria-hidden="true" />
+                  ) : (
+                    getKeyDisplay(key)
+                  )}
                 </button>
               )
-            }
-
-            const isOperator =
-              key === '+' || key === '-' || key === '*' || key === '/'
-            const isClear = key === 'C'
-
-            return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => handleKeyPress(key)}
-                className={`rounded-lg border px-3 py-2 font-medium ${
-                  isClear
-                    ? 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100'
-                    : isOperator
-                      ? 'border-slate-300 bg-slate-100 text-slate-800 hover:bg-slate-200'
-                      : 'border-slate-200 bg-white text-slate-800 hover:bg-slate-50'
-                }`}
-                aria-label={isOperator ? OPERATOR_LABELS[key] : key}
-              >
-                {key === '*' ? '×' : key === '/' ? '÷' : key}
-              </button>
-            )
-          })}
+            }),
+          )}
         </div>
 
         <button
           type="button"
           onClick={handleApply}
-          className="mt-3 w-full rounded-lg bg-slate-900 px-4 py-2 font-medium text-white hover:bg-slate-800"
+          className="mt-3 w-full rounded-xl bg-slate-900 px-4 py-3 font-medium text-white hover:bg-slate-800"
         >
           Usar resultado
         </button>
