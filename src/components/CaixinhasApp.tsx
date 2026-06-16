@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useHydrated } from '@tanstack/react-router'
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { useState } from 'react'
 
@@ -39,6 +40,7 @@ function currentPeriod() {
 
 export function CaixinhasApp() {
   const queryClient = useQueryClient()
+  const hydrated = useHydrated()
   const period = currentPeriod()
   const [viewMonth, setViewMonth] = useState(period.month)
   const [viewYear, setViewYear] = useState(period.year)
@@ -407,7 +409,7 @@ export function CaixinhasApp() {
                   {formatCurrency(visibleGroup.totalTargetCents)} ·{' '}
                   {visibleGroup.totalPercent}%
                 </span>
-                {dailyGoal ? (
+                {hydrated && dailyGoal ? (
                   <span className="rounded-full bg-amber-50 px-3 py-1 text-sm font-medium text-amber-800">
                     {dailyGoal.dailyGoalCents === 0
                       ? 'Meta diária: concluída'
