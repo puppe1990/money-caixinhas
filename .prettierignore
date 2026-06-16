@@ -1,0 +1,8 @@
+node_modules
+dist
+dist-ssr
+.netlify
+.output
+.tanstack
+package-lock.json
+src/routeTree.gen.ts

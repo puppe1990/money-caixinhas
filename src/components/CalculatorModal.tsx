@@ -124,9 +124,7 @@ export function CalculatorModal({
           {display}
         </div>
 
-        {error ? (
-          <p className="mb-3 text-sm text-red-600">{error}</p>
-        ) : null}
+        {error ? <p className="mb-3 text-sm text-red-600">{error}</p> : null}
 
         <div className="grid grid-cols-4 gap-2">
           {BUTTONS.map((key) => {
@@ -144,7 +142,8 @@ export function CalculatorModal({
               )
             }
 
-            const isOperator = key === '+' || key === '-' || key === '*' || key === '/'
+            const isOperator =
+              key === '+' || key === '-' || key === '*' || key === '/'
             const isClear = key === 'C'
 
             return (

@@ -50,7 +50,10 @@ function replaceTrailingOperator(display: string, operator: string): string {
   return display + operator
 }
 
-export function pressCalculatorKey(display: string, key: CalculatorKey): string {
+export function pressCalculatorKey(
+  display: string,
+  key: CalculatorKey,
+): string {
   if (key === 'C') {
     return INITIAL_CALCULATOR_DISPLAY
   }
@@ -226,12 +229,13 @@ export function evaluateCalculatorDisplay(display: string): number {
     throw new Error('Expressão inválida')
   }
 
-  const sanitized = display.endsWith('+') ||
+  const sanitized =
+    display.endsWith('+') ||
     display.endsWith('-') ||
     display.endsWith('*') ||
     display.endsWith('/')
-    ? display.slice(0, -1)
-    : display
+      ? display.slice(0, -1)
+      : display
 
   if (!sanitized || sanitized === '-') {
     throw new Error('Expressão inválida')

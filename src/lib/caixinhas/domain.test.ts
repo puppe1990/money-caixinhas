@@ -51,9 +51,9 @@ describe('validateDepositDate', () => {
   })
 
   it('rejeita datas inválidas', () => {
-    expect(() => validateDepositDate({ day: 31, month: 2, year: 2026 })).toThrow(
-      'Data inválida',
-    )
+    expect(() =>
+      validateDepositDate({ day: 31, month: 2, year: 2026 }),
+    ).toThrow('Data inválida')
     expect(() => validateDepositDate({ day: 0, month: 6, year: 2026 })).toThrow(
       'Data inválida',
     )
@@ -64,10 +64,7 @@ describe('calculateProgress', () => {
   it('calcula total depositado e percentual da meta', () => {
     const progress = calculateProgress({
       targetAmountCents: 10000,
-      deposits: [
-        { amountCents: 2500 },
-        { amountCents: 1500 },
-      ],
+      deposits: [{ amountCents: 2500 }, { amountCents: 1500 }],
     })
 
     expect(progress.savedCents).toBe(4000)

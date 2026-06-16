@@ -77,7 +77,9 @@ async function main() {
       year: row.year,
       createdAt: row.createdAt,
     })
-    console.log(`✓ depósito: caixinha ${row.caixinhaId} · R$ ${row.amountCents / 100}`)
+    console.log(
+      `✓ depósito: caixinha ${row.caixinhaId} · R$ ${row.amountCents / 100}`,
+    )
   }
 
   console.log(

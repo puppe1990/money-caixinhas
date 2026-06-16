@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 
-import {
-  formatCentsToMoneyInput,
-  periodLabel,
-} from '#/lib/caixinhas/domain'
-import type { CaixinhaProgress, TransacaoHistorico } from '#/lib/caixinhas/types'
+import { formatCentsToMoneyInput, periodLabel } from '#/lib/caixinhas/domain'
+import type {
+  CaixinhaProgress,
+  TransacaoHistorico,
+} from '#/lib/caixinhas/types'
 
 import { MoneyInputWithCalculator } from './MoneyInputWithCalculator'
 

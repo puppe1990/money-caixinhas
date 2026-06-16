@@ -16,7 +16,10 @@ import {
   periodLabel,
   shiftPeriod,
 } from '#/lib/caixinhas/domain'
-import type { CaixinhaProgress, TransacaoHistorico } from '#/lib/caixinhas/types'
+import type {
+  CaixinhaProgress,
+  TransacaoHistorico,
+} from '#/lib/caixinhas/types'
 import {
   addDepositoFn,
   createCaixinhaFn,
@@ -50,7 +53,9 @@ export function CaixinhasApp() {
     useState<CaixinhaProgress | null>(null)
   const [editingTransacao, setEditingTransacao] =
     useState<TransacaoHistorico | null>(null)
-  const [novaCaixinhaError, setNovaCaixinhaError] = useState<string | null>(null)
+  const [novaCaixinhaError, setNovaCaixinhaError] = useState<string | null>(
+    null,
+  )
   const [depositoError, setDepositoError] = useState<string | null>(null)
   const [modalError, setModalError] = useState<string | null>(null)
   const [transacaoModalError, setTransacaoModalError] = useState<string | null>(
@@ -87,7 +92,9 @@ export function CaixinhasApp() {
       setDepositoError(null)
       setShowDepositoModal(false)
       await queryClient.invalidateQueries({ queryKey: ['caixinhas'] })
-      await queryClient.invalidateQueries({ queryKey: ['historico-transacoes'] })
+      await queryClient.invalidateQueries({
+        queryKey: ['historico-transacoes'],
+      })
     },
     onError: (err) => {
       setDepositoError(
@@ -102,7 +109,9 @@ export function CaixinhasApp() {
       setModalError(null)
       setEditingCaixinha(null)
       await queryClient.invalidateQueries({ queryKey: ['caixinhas'] })
-      await queryClient.invalidateQueries({ queryKey: ['historico-transacoes'] })
+      await queryClient.invalidateQueries({
+        queryKey: ['historico-transacoes'],
+      })
     },
     onError: (err) => {
       setModalError(
@@ -117,7 +126,9 @@ export function CaixinhasApp() {
       setModalError(null)
       setEditingCaixinha(null)
       await queryClient.invalidateQueries({ queryKey: ['caixinhas'] })
-      await queryClient.invalidateQueries({ queryKey: ['historico-transacoes'] })
+      await queryClient.invalidateQueries({
+        queryKey: ['historico-transacoes'],
+      })
     },
     onError: (err) => {
       setModalError(
@@ -132,7 +143,9 @@ export function CaixinhasApp() {
       setTransacaoModalError(null)
       setEditingTransacao(null)
       await queryClient.invalidateQueries({ queryKey: ['caixinhas'] })
-      await queryClient.invalidateQueries({ queryKey: ['historico-transacoes'] })
+      await queryClient.invalidateQueries({
+        queryKey: ['historico-transacoes'],
+      })
     },
     onError: (err) => {
       setTransacaoModalError(
@@ -147,7 +160,9 @@ export function CaixinhasApp() {
       setTransacaoModalError(null)
       setEditingTransacao(null)
       await queryClient.invalidateQueries({ queryKey: ['caixinhas'] })
-      await queryClient.invalidateQueries({ queryKey: ['historico-transacoes'] })
+      await queryClient.invalidateQueries({
+        queryKey: ['historico-transacoes'],
+      })
     },
     onError: (err) => {
       setTransacaoModalError(
@@ -277,7 +292,10 @@ export function CaixinhasApp() {
   }
 
   function closeEditTransacaoModal() {
-    if (updateTransacaoMutation.isPending || deleteTransacaoMutation.isPending) {
+    if (
+      updateTransacaoMutation.isPending ||
+      deleteTransacaoMutation.isPending
+    ) {
       return
     }
     setTransacaoModalError(null)
