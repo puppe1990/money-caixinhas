@@ -8,6 +8,8 @@
   "scripts": {
     "dev": "vite dev --port 3000",
     "generate-routes": "tsr generate",
+    "icons:generate": "tsx scripts/generate-pwa-icons.ts",
+    "prebuild": "npm run icons:generate",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
@@ -72,6 +74,8 @@
     "jsdom": "^28.1.0",
     "lint-staged": "^16.4.0",
     "prettier": "^3.8.4",
+    "sharp": "^0.35.2",
+    "to-ico": "^1.1.5",
     "tsx": "^4.21.0",
     "typescript": "^6.0.2",
     "typescript-eslint": "^8.61.1",

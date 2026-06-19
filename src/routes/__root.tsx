@@ -8,6 +8,7 @@ import {
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 
+import { PwaRegister } from '#/components/PwaRegister'
 import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
 import TanstackQueryProvider from '../integrations/tanstack-query/root-provider'
 
@@ -39,6 +40,13 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       { title: SITE_TITLE },
       { name: 'description', content: SITE_DESCRIPTION },
       { name: 'theme-color', content: '#059669' },
+      { name: 'mobile-web-app-capable', content: 'yes' },
+      { name: 'apple-mobile-web-app-capable', content: 'yes' },
+      { name: 'apple-mobile-web-app-title', content: SITE_NAME },
+      {
+        name: 'apple-mobile-web-app-status-bar-style',
+        content: 'black-translucent',
+      },
       { property: 'og:type', content: 'website' },
       { property: 'og:site_name', content: SITE_NAME },
       { property: 'og:locale', content: 'pt_BR' },
@@ -58,8 +66,18 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       { rel: 'stylesheet', href: appCss },
       { rel: 'canonical', href: SITE_URL },
       { rel: 'manifest', href: '/manifest.json' },
-      { rel: 'icon', href: '/favicon.ico' },
-      { rel: 'apple-touch-icon', href: '/logo192.png' },
+      { rel: 'icon', href: '/favicon.ico', sizes: '48x48' },
+      {
+        rel: 'icon',
+        href: '/favicon-32.png',
+        sizes: '32x32',
+        type: 'image/png',
+      },
+      {
+        rel: 'apple-touch-icon',
+        href: '/apple-touch-icon.png',
+        sizes: '180x180',
+      },
     ],
     scripts: [
       {
@@ -99,6 +117,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <body>
         {children}
         <ClientOnly>
+          <PwaRegister />
           <TanStackDevtools
             config={{
               position: 'bottom-right',
