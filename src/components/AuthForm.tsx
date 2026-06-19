@@ -1,6 +1,8 @@
 import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
 
+import { PasswordInput } from '#/components/PasswordInput'
+
 type AuthMode = 'login' | 'signup'
 
 type AuthFormProps = {
@@ -71,8 +73,7 @@ export function AuthForm({
 
           <label className="block space-y-1">
             <span className="text-sm font-medium text-slate-700">Senha</span>
-            <input
-              type="password"
+            <PasswordInput
               name="password"
               autoComplete={
                 mode === 'login' ? 'current-password' : 'new-password'
@@ -80,8 +81,7 @@ export function AuthForm({
               required
               minLength={8}
               value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-emerald-500 focus:ring-2"
+              onChange={setPassword}
               placeholder="Mínimo 8 caracteres"
             />
           </label>

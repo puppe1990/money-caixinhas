@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 
+import { PasswordInput } from '#/components/PasswordInput'
+
 type TrocarSenhaModalProps = {
   open: boolean
   isSaving: boolean
@@ -86,13 +88,11 @@ export function TrocarSenhaModal({
             <span className="text-sm font-medium text-slate-700">
               Senha atual
             </span>
-            <input
-              type="password"
+            <PasswordInput
               autoComplete="current-password"
               required
               value={currentPassword}
-              onChange={(event) => setCurrentPassword(event.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-emerald-500 focus:ring-2"
+              onChange={setCurrentPassword}
             />
           </label>
 
@@ -100,14 +100,12 @@ export function TrocarSenhaModal({
             <span className="text-sm font-medium text-slate-700">
               Nova senha
             </span>
-            <input
-              type="password"
+            <PasswordInput
               autoComplete="new-password"
               required
               minLength={8}
               value={newPassword}
-              onChange={(event) => setNewPassword(event.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-emerald-500 focus:ring-2"
+              onChange={setNewPassword}
             />
           </label>
 
@@ -115,14 +113,12 @@ export function TrocarSenhaModal({
             <span className="text-sm font-medium text-slate-700">
               Confirmar nova senha
             </span>
-            <input
-              type="password"
+            <PasswordInput
               autoComplete="new-password"
               required
               minLength={8}
               value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-emerald-500 focus:ring-2"
+              onChange={setConfirmPassword}
             />
           </label>
 
