@@ -4,8 +4,12 @@ import { config } from 'dotenv'
 
 import * as schema from '../src/db/schema.ts'
 import { caixinhas, depositos } from '../src/db/schema.ts'
+import { ensureSeedUser } from '../src/lib/auth/repository.ts'
 
 config({ path: ['.env.local', '.env'] })
+
+const seedEmail = 'matheus.puppe@gmail.com'
+const seedPassword = process.env.SEED_USER_PASSWORD ?? 'Caixinhas2026!'
 
 const client = createClient({
   url: process.env.TURSO_DATABASE_URL ?? 'file:local.db',
@@ -42,6 +46,11 @@ const seedData = [
 ] as const
 
 async function main() {
+  const user = await ensureSeedUser(db, {
+    email: seedEmail,
+    password: seedPassword,
+  })
+
   const existing = await db.select().from(caixinhas)
 
   if (existing.length > 0) {
@@ -58,6 +67,7 @@ async function main() {
     const [created] = await db
       .insert(caixinhas)
       .values({
+        userId: user.id,
         name: item.name,
         targetAmountCents: item.targetAmountCents,
         month: item.month,
@@ -81,6 +91,7 @@ async function main() {
     console.log(`✓ ${item.name}`)
   }
 
+  console.log(`✓ Usuário: ${seedEmail}`)
   console.log('Dados restaurados com sucesso.')
   client.close()
 }

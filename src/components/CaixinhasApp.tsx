@@ -1,6 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useHydrated } from '@tanstack/react-router'
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
+import {
+  useHydrated,
+  useNavigate,
+  useRouteContext,
+} from '@tanstack/react-router'
+import { ChevronLeft, ChevronRight, LogOut, Plus } from 'lucide-react'
 import { useState } from 'react'
 
 import { EditCaixinhaModal } from '#/components/EditCaixinhaModal'
@@ -31,6 +35,7 @@ import {
   updateCaixinhaFn,
   updateDepositoFn,
 } from '#/lib/caixinhas/functions'
+import { logoutFn } from '#/lib/auth/functions'
 
 function currentPeriod() {
   const now = new Date()
@@ -43,6 +48,8 @@ function currentPeriod() {
 
 export function CaixinhasApp() {
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
+  const { session } = useRouteContext({ from: '/_authenticated' })
   const hydrated = useHydrated()
   const period = currentPeriod()
   const [viewMonth, setViewMonth] = useState(period.month)
@@ -341,6 +348,12 @@ export function CaixinhasApp() {
     })
   }
 
+  async function handleLogout() {
+    await logoutFn()
+    await queryClient.clear()
+    await navigate({ to: '/login' })
+  }
+
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-6 md:p-10">
       <header className="flex flex-wrap items-center justify-between gap-4">
@@ -354,6 +367,17 @@ export function CaixinhasApp() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800">
+            {session.email}
+          </span>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            <LogOut className="h-4 w-4" />
+            Sair
+          </button>
           <button
             type="button"
             onClick={openNovaCaixinhaModal}

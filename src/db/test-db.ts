@@ -12,8 +12,27 @@ export async function createTestDb(): Promise<TestDatabase> {
   const db = drizzle({ client, schema }) as TestDatabase
 
   await client.execute(`
+    CREATE TABLE users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT NOT NULL UNIQUE,
+      password_hash TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    )
+  `)
+
+  await client.execute(`
+    CREATE TABLE sessions (
+      id TEXT PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      expires_at TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    )
+  `)
+
+  await client.execute(`
     CREATE TABLE caixinhas (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       name TEXT NOT NULL,
       target_amount_cents INTEGER NOT NULL,
       month INTEGER NOT NULL,

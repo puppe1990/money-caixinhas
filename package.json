@@ -20,6 +20,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:seed": "tsx scripts/seed-caixinhas.ts",
+    "db:setup-auth": "tsx scripts/setup-auth-schema.ts",
+    "db:migrate-auth": "tsx scripts/setup-auth-schema.ts && tsx scripts/migrate-auth-data.ts",
     "db:sync-prod": "tsx scripts/sync-local-to-turso.ts",
     "db:pull": "drizzle-kit pull",
     "db:studio": "drizzle-kit studio"

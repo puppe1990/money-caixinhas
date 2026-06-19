@@ -2,6 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
 
 import { db } from '#/db'
+import { authMiddleware } from '#/lib/auth/middleware'
 import { parseMoneyToCents } from '#/lib/caixinhas/domain'
 import {
   addDeposito,
@@ -53,30 +54,32 @@ const updateDepositoSchema = addDepositoSchema.extend({
   id: z.number().int().positive(),
 })
 
-export const getCaixinhas = createServerFn({ method: 'GET' }).handler(
-  async () => {
-    return listCaixinhasWithProgress(db)
-  },
-)
+export const getCaixinhas = createServerFn({ method: 'GET' })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    return listCaixinhasWithProgress(db, context.userId)
+  })
 
-export const getHistoricoTransacoes = createServerFn({ method: 'GET' }).handler(
-  async () => {
-    return listHistoricoTransacoes(db)
-  },
-)
+export const getHistoricoTransacoes = createServerFn({ method: 'GET' })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    return listHistoricoTransacoes(db, context.userId)
+  })
 
 export const getDepositos = createServerFn({ method: 'GET' })
+  .middleware([authMiddleware])
   .validator((data: { caixinhaId: number }) => data)
-  .handler(async ({ data }) => {
-    return listDepositosByCaixinha(db, data.caixinhaId)
+  .handler(async ({ data, context }) => {
+    return listDepositosByCaixinha(db, context.userId, data.caixinhaId)
   })
 
 export const createCaixinhaFn = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
   .validator((data: unknown) => createCaixinhaSchema.parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const targetAmountCents = parseMoneyToCents(data.targetAmount)
 
-    return createCaixinha(db, {
+    return createCaixinha(db, context.userId, {
       name: data.name,
       targetAmountCents,
       month: data.month,
@@ -85,11 +88,12 @@ export const createCaixinhaFn = createServerFn({ method: 'POST' })
   })
 
 export const addDepositoFn = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
   .validator((data: unknown) => addDepositoSchema.parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const amountCents = parseMoneyToCents(data.amount)
 
-    return addDeposito(db, {
+    return addDeposito(db, context.userId, {
       caixinhaId: data.caixinhaId,
       amountCents,
       day: data.day,
@@ -99,11 +103,12 @@ export const addDepositoFn = createServerFn({ method: 'POST' })
   })
 
 export const updateCaixinhaFn = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
   .validator((data: unknown) => updateCaixinhaSchema.parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const targetAmountCents = parseMoneyToCents(data.targetAmount)
 
-    return updateCaixinha(db, data.id, {
+    return updateCaixinha(db, context.userId, data.id, {
       name: data.name,
       targetAmountCents,
       month: data.month,
@@ -112,17 +117,19 @@ export const updateCaixinhaFn = createServerFn({ method: 'POST' })
   })
 
 export const deleteCaixinhaFn = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
   .validator((data: unknown) => deleteCaixinhaSchema.parse(data))
-  .handler(async ({ data }) => {
-    return deleteCaixinha(db, data.id)
+  .handler(async ({ data, context }) => {
+    return deleteCaixinha(db, context.userId, data.id)
   })
 
 export const updateDepositoFn = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
   .validator((data: unknown) => updateDepositoSchema.parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const amountCents = parseMoneyToCents(data.amount)
 
-    return updateDeposito(db, data.id, {
+    return updateDeposito(db, context.userId, data.id, {
       caixinhaId: data.caixinhaId,
       amountCents,
       day: data.day,
@@ -132,14 +139,16 @@ export const updateDepositoFn = createServerFn({ method: 'POST' })
   })
 
 export const reorderCaixinhasFn = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
   .validator((data: unknown) => reorderCaixinhasSchema.parse(data))
-  .handler(async ({ data }) => {
-    await reorderCaixinhas(db, data)
-    return listCaixinhasWithProgress(db)
+  .handler(async ({ data, context }) => {
+    await reorderCaixinhas(db, context.userId, data)
+    return listCaixinhasWithProgress(db, context.userId)
   })
 
 export const deleteDepositoFn = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
   .validator((data: unknown) => deleteDepositoSchema.parse(data))
-  .handler(async ({ data }) => {
-    return deleteDeposito(db, data.id)
+  .handler(async ({ data, context }) => {
+    return deleteDeposito(db, context.userId, data.id)
   })

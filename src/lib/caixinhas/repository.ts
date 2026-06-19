@@ -9,8 +9,44 @@ import type { CaixinhaProgress, TransacaoHistorico } from './types'
 
 type Database = LibSQLDatabase<typeof schema>
 
+async function getCaixinhaForUser(
+  db: Database,
+  userId: number,
+  caixinhaId: number,
+) {
+  const [row] = await db
+    .select()
+    .from(caixinhas)
+    .where(and(eq(caixinhas.id, caixinhaId), eq(caixinhas.userId, userId)))
+
+  if (!row) {
+    throw new Error('Caixinha não encontrada')
+  }
+
+  return row
+}
+
+async function getDepositoForUser(
+  db: Database,
+  userId: number,
+  depositoId: number,
+) {
+  const [row] = await db
+    .select({ deposito: depositos })
+    .from(depositos)
+    .innerJoin(caixinhas, eq(depositos.caixinhaId, caixinhas.id))
+    .where(and(eq(depositos.id, depositoId), eq(caixinhas.userId, userId)))
+
+  if (!row) {
+    throw new Error('Transação não encontrada')
+  }
+
+  return row.deposito
+}
+
 export async function createCaixinha(
   db: Database,
+  userId: number,
   input: {
     name: string
     targetAmountCents: number
@@ -24,12 +60,17 @@ export async function createCaixinha(
     })
     .from(caixinhas)
     .where(
-      and(eq(caixinhas.month, input.month), eq(caixinhas.year, input.year)),
+      and(
+        eq(caixinhas.userId, userId),
+        eq(caixinhas.month, input.month),
+        eq(caixinhas.year, input.year),
+      ),
     )
 
   const [created] = await db
     .insert(caixinhas)
     .values({
+      userId,
       name: input.name.trim(),
       targetAmountCents: input.targetAmountCents,
       month: input.month,
@@ -43,6 +84,7 @@ export async function createCaixinha(
 
 export async function addDeposito(
   db: Database,
+  userId: number,
   input: {
     caixinhaId: number
     amountCents: number
@@ -51,6 +93,8 @@ export async function addDeposito(
     year: number
   },
 ) {
+  await getCaixinhaForUser(db, userId, input.caixinhaId)
+
   validateDepositDate({
     day: input.day,
     month: input.month,
@@ -73,6 +117,7 @@ export async function addDeposito(
 
 export async function updateDeposito(
   db: Database,
+  userId: number,
   id: number,
   input: {
     caixinhaId: number
@@ -82,6 +127,9 @@ export async function updateDeposito(
     year: number
   },
 ) {
+  await getDepositoForUser(db, userId, id)
+  await getCaixinhaForUser(db, userId, input.caixinhaId)
+
   validateDepositDate({
     day: input.day,
     month: input.month,
@@ -107,7 +155,9 @@ export async function updateDeposito(
   return updated
 }
 
-export async function deleteDeposito(db: Database, id: number) {
+export async function deleteDeposito(db: Database, userId: number, id: number) {
+  await getDepositoForUser(db, userId, id)
+
   const [deleted] = await db
     .delete(depositos)
     .where(eq(depositos.id, id))
@@ -122,6 +172,7 @@ export async function deleteDeposito(db: Database, id: number) {
 
 export async function updateCaixinha(
   db: Database,
+  userId: number,
   id: number,
   input: {
     name: string
@@ -130,6 +181,8 @@ export async function updateCaixinha(
     year: number
   },
 ) {
+  await getCaixinhaForUser(db, userId, id)
+
   const [updated] = await db
     .update(caixinhas)
     .set({
@@ -138,7 +191,7 @@ export async function updateCaixinha(
       month: input.month,
       year: input.year,
     })
-    .where(eq(caixinhas.id, id))
+    .where(and(eq(caixinhas.id, id), eq(caixinhas.userId, userId)))
     .returning()
 
   if (!updated) {
@@ -148,10 +201,12 @@ export async function updateCaixinha(
   return updated
 }
 
-export async function deleteCaixinha(db: Database, id: number) {
+export async function deleteCaixinha(db: Database, userId: number, id: number) {
+  await getCaixinhaForUser(db, userId, id)
+
   const [deleted] = await db
     .delete(caixinhas)
-    .where(eq(caixinhas.id, id))
+    .where(and(eq(caixinhas.id, id), eq(caixinhas.userId, userId)))
     .returning()
 
   if (!deleted) {
@@ -163,13 +218,18 @@ export async function deleteCaixinha(db: Database, id: number) {
 
 export async function reorderCaixinhas(
   db: Database,
+  userId: number,
   input: { month: number; year: number; orderedIds: number[] },
 ) {
   const periodRows = await db
     .select({ id: caixinhas.id })
     .from(caixinhas)
     .where(
-      and(eq(caixinhas.month, input.month), eq(caixinhas.year, input.year)),
+      and(
+        eq(caixinhas.userId, userId),
+        eq(caixinhas.month, input.month),
+        eq(caixinhas.year, input.year),
+      ),
     )
 
   const periodIds = new Set(periodRows.map((row) => row.id))
@@ -188,13 +248,14 @@ export async function reorderCaixinhas(
       db
         .update(caixinhas)
         .set({ sortOrder: index })
-        .where(eq(caixinhas.id, id)),
+        .where(and(eq(caixinhas.id, id), eq(caixinhas.userId, userId))),
     ),
   )
 }
 
 export async function listCaixinhasWithProgress(
   db: Database,
+  userId: number,
 ): Promise<CaixinhaProgress[]> {
   const rows = await db
     .select({
@@ -207,6 +268,7 @@ export async function listCaixinhasWithProgress(
     })
     .from(caixinhas)
     .leftJoin(depositos, eq(depositos.caixinhaId, caixinhas.id))
+    .where(eq(caixinhas.userId, userId))
     .groupBy(caixinhas.id)
     .orderBy(
       asc(caixinhas.year),
@@ -237,8 +299,11 @@ export async function listCaixinhasWithProgress(
 
 export async function listDepositosByCaixinha(
   db: Database,
+  userId: number,
   caixinhaId: number,
 ) {
+  await getCaixinhaForUser(db, userId, caixinhaId)
+
   return db
     .select()
     .from(depositos)
@@ -248,6 +313,7 @@ export async function listDepositosByCaixinha(
 
 export async function listHistoricoTransacoes(
   db: Database,
+  userId: number,
 ): Promise<TransacaoHistorico[]> {
   const rows = await db
     .select({
@@ -263,6 +329,7 @@ export async function listHistoricoTransacoes(
     })
     .from(depositos)
     .innerJoin(caixinhas, eq(depositos.caixinhaId, caixinhas.id))
+    .where(eq(caixinhas.userId, userId))
     .orderBy(
       desc(depositos.year),
       desc(depositos.month),
