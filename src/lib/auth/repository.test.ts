@@ -5,6 +5,7 @@ import type { TestDatabase } from '#/db/test-db'
 import { sessions, users } from '#/db/schema'
 
 import {
+  changeUserPassword,
   createSession,
   createUser,
   ensureSeedUser,
@@ -117,6 +118,51 @@ describe('auth repository', () => {
 
     expect(session).toBeNull()
     expect(sessionRows).toHaveLength(0)
+  })
+
+  it('atualiza senha quando a senha atual está correta', async () => {
+    const user = await createUser(db, {
+      email: 'matheus.puppe@gmail.com',
+      password: 'senha-atual',
+    })
+
+    await changeUserPassword(db, user.id, {
+      currentPassword: 'senha-atual',
+      newPassword: 'senha-nova',
+    })
+
+    const withOldPassword = await verifyUserCredentials(db, {
+      email: 'matheus.puppe@gmail.com',
+      password: 'senha-atual',
+    })
+    const withNewPassword = await verifyUserCredentials(db, {
+      email: 'matheus.puppe@gmail.com',
+      password: 'senha-nova',
+    })
+
+    expect(withOldPassword).toBeNull()
+    expect(withNewPassword?.email).toBe('matheus.puppe@gmail.com')
+  })
+
+  it('rejeita troca de senha com senha atual incorreta', async () => {
+    const user = await createUser(db, {
+      email: 'matheus.puppe@gmail.com',
+      password: 'senha-atual',
+    })
+
+    await expect(
+      changeUserPassword(db, user.id, {
+        currentPassword: 'senha-errada',
+        newPassword: 'senha-nova',
+      }),
+    ).rejects.toThrow('Senha atual incorreta')
+
+    const withOldPassword = await verifyUserCredentials(db, {
+      email: 'matheus.puppe@gmail.com',
+      password: 'senha-atual',
+    })
+
+    expect(withOldPassword?.email).toBe('matheus.puppe@gmail.com')
   })
 
   it('ensureSeedUser cria usuário apenas uma vez', async () => {

@@ -4,7 +4,7 @@ import {
   useNavigate,
   useRouteContext,
 } from '@tanstack/react-router'
-import { ChevronLeft, ChevronRight, LogOut, Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, KeyRound, LogOut, Plus } from 'lucide-react'
 import { useState } from 'react'
 
 import { EditCaixinhaModal } from '#/components/EditCaixinhaModal'
@@ -12,6 +12,7 @@ import { EditTransacaoModal } from '#/components/EditTransacaoModal'
 import { NovaCaixinhaModal } from '#/components/NovaCaixinhaModal'
 import { RegistrarDepositoModal } from '#/components/RegistrarDepositoModal'
 import { SortableCaixinhasGrid } from '#/components/SortableCaixinhasGrid'
+import { TrocarSenhaModal } from '#/components/TrocarSenhaModal'
 import {
   buildPeriodGroup,
   calculateDailyGoal,
@@ -35,7 +36,7 @@ import {
   updateCaixinhaFn,
   updateDepositoFn,
 } from '#/lib/caixinhas/functions'
-import { logoutFn } from '#/lib/auth/functions'
+import { changePasswordFn, logoutFn } from '#/lib/auth/functions'
 
 function currentPeriod() {
   const now = new Date()
@@ -68,6 +69,8 @@ export function CaixinhasApp() {
   const [transacaoModalError, setTransacaoModalError] = useState<string | null>(
     null,
   )
+  const [showTrocarSenhaModal, setShowTrocarSenhaModal] = useState(false)
+  const [trocarSenhaError, setTrocarSenhaError] = useState<string | null>(null)
 
   const { data: caixinhas = [], isLoading } = useQuery({
     queryKey: ['caixinhas'],
@@ -182,6 +185,19 @@ export function CaixinhasApp() {
     mutationFn: reorderCaixinhasFn,
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['caixinhas'] })
+    },
+  })
+
+  const changePasswordMutation = useMutation({
+    mutationFn: changePasswordFn,
+    onSuccess: async () => {
+      setTrocarSenhaError(null)
+      setShowTrocarSenhaModal(false)
+    },
+    onError: (err) => {
+      setTrocarSenhaError(
+        err instanceof Error ? err.message : 'Erro ao trocar senha',
+      )
     },
   })
 
@@ -354,6 +370,27 @@ export function CaixinhasApp() {
     await navigate({ to: '/login' })
   }
 
+  function openTrocarSenhaModal() {
+    setTrocarSenhaError(null)
+    setShowTrocarSenhaModal(true)
+  }
+
+  function closeTrocarSenhaModal() {
+    if (changePasswordMutation.isPending) {
+      return
+    }
+
+    setTrocarSenhaError(null)
+    setShowTrocarSenhaModal(false)
+  }
+
+  async function handleChangePassword(data: {
+    currentPassword: string
+    newPassword: string
+  }) {
+    await changePasswordMutation.mutateAsync({ data })
+  }
+
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-6 md:p-10">
       <header className="flex flex-wrap items-center justify-between gap-4">
@@ -370,6 +407,14 @@ export function CaixinhasApp() {
           <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800">
             {session.email}
           </span>
+          <button
+            type="button"
+            onClick={openTrocarSenhaModal}
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            <KeyRound className="h-4 w-4" />
+            Trocar senha
+          </button>
           <button
             type="button"
             onClick={handleLogout}
@@ -599,6 +644,14 @@ export function CaixinhasApp() {
         onClose={closeEditTransacaoModal}
         onSave={handleUpdateTransacao}
         onDelete={handleDeleteTransacao}
+      />
+
+      <TrocarSenhaModal
+        open={showTrocarSenhaModal}
+        isSaving={changePasswordMutation.isPending}
+        error={trocarSenhaError}
+        onClose={closeTrocarSenhaModal}
+        onSave={handleChangePassword}
       />
     </div>
   )

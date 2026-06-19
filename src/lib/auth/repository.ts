@@ -113,6 +113,39 @@ export async function findValidSession(
   }
 }
 
+export async function findUserById(db: Database, userId: number) {
+  const [user] = await db.select().from(users).where(eq(users.id, userId))
+
+  return user ?? null
+}
+
+export async function changeUserPassword(
+  db: Database,
+  userId: number,
+  input: { currentPassword: string; newPassword: string },
+) {
+  const user = await findUserById(db, userId)
+
+  if (!user) {
+    throw new Error('Usuário não encontrado')
+  }
+
+  const passwordMatches = await verifyPassword(
+    input.currentPassword,
+    user.passwordHash,
+  )
+
+  if (!passwordMatches) {
+    throw new Error('Senha atual incorreta')
+  }
+
+  const passwordHash = await hashPassword(input.newPassword)
+
+  await db.update(users).set({ passwordHash }).where(eq(users.id, userId))
+
+  return user
+}
+
 export async function ensureSeedUser(
   db: Database,
   input: { email: string; password: string },

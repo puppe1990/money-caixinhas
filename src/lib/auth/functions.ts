@@ -5,6 +5,7 @@ import { db } from '#/db'
 
 import { authMiddleware } from './middleware'
 import {
+  changeUserPassword,
   createSession,
   createUser,
   findUserByEmail,
@@ -70,6 +71,24 @@ export const logoutFn = createServerFn({ method: 'POST' })
   .handler(async ({ context }) => {
     await revokeSession(db, context.session.id)
     clearSessionCookie()
+    return { ok: true }
+  })
+
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'Senha atual obrigatória'),
+  newPassword: z.string().min(8, 'Nova senha deve ter pelo menos 8 caracteres'),
+})
+
+export const changePasswordFn = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
+  .validator((data: unknown) => changePasswordSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    await changeUserPassword(db, context.userId, data)
+
+    await revokeAllSessionsForUser(db, context.userId)
+    const token = await createSession(db, context.userId)
+    setSessionCookie(token)
+
     return { ok: true }
   })
 
