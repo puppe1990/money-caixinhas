@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v1'
+const CACHE_VERSION = 'v2'
 const CACHE_NAME = `caixinhas-${CACHE_VERSION}`
 
 const PRECACHE_URLS = [
@@ -10,6 +10,26 @@ const PRECACHE_URLS = [
   '/favicon-32.png',
   '/apple-touch-icon.png',
 ]
+
+const API_PATH_PREFIXES = ['/_tanstack/', '/_build/']
+
+function isApiRequest(url) {
+  return API_PATH_PREFIXES.some((prefix) => url.pathname.startsWith(prefix))
+}
+
+function shouldCache(request) {
+  if (request.method !== 'GET') {
+    return false
+  }
+
+  const url = new URL(request.url)
+
+  if (isApiRequest(url)) {
+    return false
+  }
+
+  return true
+}
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -34,7 +54,7 @@ self.addEventListener('activate', (event) => {
 })
 
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') {
+  if (!shouldCache(event.request)) {
     return
   }
 
