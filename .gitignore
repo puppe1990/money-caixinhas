@@ -18,3 +18,4 @@ local.db-*
 
 # Playwright CLI artifacts
 .playwright-cli
+.screenshots-review
