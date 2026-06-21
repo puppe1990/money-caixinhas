@@ -75,11 +75,15 @@ export function CaixinhasApp() {
   const { data: caixinhas = [], isLoading } = useQuery({
     queryKey: ['caixinhas'],
     queryFn: () => getCaixinhas(),
+    staleTime: 0,
+    refetchOnMount: true,
   })
 
   const { data: historico = [], isLoading: isLoadingHistorico } = useQuery({
     queryKey: ['historico-transacoes'],
     queryFn: () => getHistoricoTransacoes(),
+    staleTime: 0,
+    refetchOnMount: true,
   })
 
   const createMutation = useMutation({
@@ -365,8 +369,13 @@ export function CaixinhasApp() {
   }
 
   async function handleLogout() {
-    await logoutFn()
-    await queryClient.clear()
+    try {
+      await logoutFn()
+    } catch {
+      // ignora erro de rede — limpa local e redireciona mesmo assim
+    }
+
+    queryClient.clear()
     await navigate({ to: '/login' })
   }
 
