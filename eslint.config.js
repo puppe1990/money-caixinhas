@@ -14,6 +14,7 @@ export default tseslint.config(
       '.netlify',
       '.output',
       '.tanstack',
+      '.screenshots-review',
       'src/routeTree.gen.ts',
     ],
   },

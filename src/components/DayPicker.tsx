@@ -64,10 +64,10 @@ export function DayPicker({
         <button
           type="button"
           onClick={onPrevMonth}
-          className="rounded-lg p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700"
           aria-label="Mês anterior"
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-5 w-5" />
         </button>
         <span className="text-sm font-semibold text-slate-900">
           {MONTH_LABELS[month - 1]} de {year}
@@ -75,10 +75,10 @@ export function DayPicker({
         <button
           type="button"
           onClick={onNextMonth}
-          className="rounded-lg p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700"
           aria-label="Próximo mês"
         >
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="h-5 w-5" />
         </button>
       </div>
 
@@ -98,7 +98,7 @@ export function DayPicker({
           const isSelected = day === selectedDay
 
           let dayClass =
-            'rounded-lg py-1.5 text-sm transition-colors cursor-pointer'
+            'inline-flex min-h-10 items-center justify-center rounded-lg text-sm transition-colors cursor-pointer'
 
           if (isSelected) {
             dayClass += ' bg-emerald-600 text-white font-semibold'
