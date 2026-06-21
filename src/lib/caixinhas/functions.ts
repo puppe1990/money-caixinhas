@@ -46,6 +46,12 @@ const reorderCaixinhasSchema = z.object({
   orderedIds: z.array(z.number().int().positive()).min(1),
 })
 
+const historicoPeriodSchema = z.object({
+  month: z.number().int().min(1).max(12),
+  year: z.number().int().min(2000).max(2100),
+  page: z.number().int().min(1).default(1),
+})
+
 const deleteDepositoSchema = z.object({
   id: z.number().int().positive(),
 })
@@ -62,8 +68,9 @@ export const getCaixinhas = createServerFn({ method: 'GET' })
 
 export const getHistoricoTransacoes = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .handler(async ({ context }) => {
-    return listHistoricoTransacoes(db, context.userId)
+  .validator((data: unknown) => historicoPeriodSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    return listHistoricoTransacoes(db, context.userId, data)
   })
 
 export const getDepositos = createServerFn({ method: 'GET' })

@@ -1,5 +1,7 @@
 import type { CaixinhaProgress, DepositDate, PeriodGroup } from './types'
 
+export const HISTORICO_PAGE_SIZE = 10
+
 const MONTH_LABELS = [
   'Janeiro',
   'Fevereiro',

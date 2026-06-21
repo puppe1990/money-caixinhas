@@ -39,3 +39,11 @@ export type TransacaoHistorico = {
   month: number
   year: number
 }
+
+export type HistoricoTransacoesPage = {
+  items: TransacaoHistorico[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+}

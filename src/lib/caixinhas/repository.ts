@@ -4,8 +4,12 @@ import type { LibSQLDatabase } from 'drizzle-orm/libsql'
 import { caixinhas, depositos } from '#/db/schema'
 import type * as schema from '#/db/schema'
 
-import { calculateProgress, validateDepositDate } from './domain'
-import type { CaixinhaProgress, TransacaoHistorico } from './types'
+import {
+  calculateProgress,
+  HISTORICO_PAGE_SIZE,
+  validateDepositDate,
+} from './domain'
+import type { CaixinhaProgress, HistoricoTransacoesPage } from './types'
 
 type Database = LibSQLDatabase<typeof schema>
 
@@ -314,7 +318,27 @@ export async function listDepositosByCaixinha(
 export async function listHistoricoTransacoes(
   db: Database,
   userId: number,
-): Promise<TransacaoHistorico[]> {
+  input: { month: number; year: number; page: number },
+): Promise<HistoricoTransacoesPage> {
+  const pageSize = HISTORICO_PAGE_SIZE
+  const page = Math.max(1, input.page)
+  const whereClause = and(
+    eq(caixinhas.userId, userId),
+    eq(depositos.month, input.month),
+    eq(depositos.year, input.year),
+  )
+
+  const [{ count }] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(depositos)
+    .innerJoin(caixinhas, eq(depositos.caixinhaId, caixinhas.id))
+    .where(whereClause)
+
+  const total = Number(count ?? 0)
+  const totalPages = total === 0 ? 0 : Math.ceil(total / pageSize)
+  const safePage = totalPages === 0 ? 1 : Math.min(page, totalPages)
+  const offset = (safePage - 1) * pageSize
+
   const rows = await db
     .select({
       id: depositos.id,
@@ -329,13 +353,21 @@ export async function listHistoricoTransacoes(
     })
     .from(depositos)
     .innerJoin(caixinhas, eq(depositos.caixinhaId, caixinhas.id))
-    .where(eq(caixinhas.userId, userId))
+    .where(whereClause)
     .orderBy(
       desc(depositos.year),
       desc(depositos.month),
       desc(depositos.day),
       desc(depositos.id),
     )
+    .limit(pageSize)
+    .offset(offset)
 
-  return rows
+  return {
+    items: rows,
+    total,
+    page: safePage,
+    pageSize,
+    totalPages,
+  }
 }
