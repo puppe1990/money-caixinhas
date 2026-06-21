@@ -1,42 +1,30 @@
 import { describe, expect, it } from 'vitest'
 
-const API_PATH_PREFIXES = ['/_tanstack/', '/_build/']
-
-function isApiRequest(pathname: string): boolean {
-  return API_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix))
-}
-
-function isStaticAsset(pathname: string): boolean {
-  return /\.(css|js|png|ico|svg|woff2?|json)$/.test(pathname)
-}
-
-type CacheStrategy = 'network-first' | 'cache-first' | 'passthrough'
-
-function getCacheStrategy(
-  method: string,
-  pathname: string,
-  mode: RequestMode,
-): CacheStrategy {
-  if (method !== 'GET') {
-    return 'passthrough'
-  }
-
-  if (isApiRequest(pathname)) {
-    return 'passthrough'
-  }
-
-  if (mode === 'navigate') {
-    return 'network-first'
-  }
-
-  if (isStaticAsset(pathname)) {
-    return 'cache-first'
-  }
-
-  return 'passthrough'
-}
+import {
+  CACHE_NAME,
+  CACHE_VERSION,
+  getCacheStrategy,
+  isApiRequest,
+  isCacheableResponse,
+  isServeableCachedResponse,
+  isStaticAsset,
+  OFFLINE_URL,
+  PRECACHE_URLS,
+} from '#/lib/pwa-cache'
 
 describe('PWA service worker cache filtering', () => {
+  describe('cache versioning', () => {
+    it('bumps cache version to invalidate stale redirect entries', () => {
+      expect(CACHE_VERSION).toBe('v4')
+      expect(CACHE_NAME).toBe('caixinhas-v4')
+    })
+
+    it('precaches offline fallback and manifest assets', () => {
+      expect(PRECACHE_URLS).toContain(OFFLINE_URL)
+      expect(PRECACHE_URLS).toContain('/manifest.json')
+    })
+  })
+
   describe('isApiRequest', () => {
     it('identifies TanStack server function URLs as API requests', () => {
       expect(isApiRequest('/_tanstack/server-fn/getCaixinhas')).toBe(true)
@@ -65,8 +53,9 @@ describe('PWA service worker cache filtering', () => {
       expect(isStaticAsset('/favicon.ico')).toBe(true)
     })
 
-    it('identifies JSON files as static assets', () => {
+    it('identifies JSON and offline HTML as static assets', () => {
       expect(isStaticAsset('/manifest.json')).toBe(true)
+      expect(isStaticAsset('/offline.html')).toBe(true)
     })
 
     it('does not identify HTML pages as static assets', () => {
@@ -76,11 +65,9 @@ describe('PWA service worker cache filtering', () => {
   })
 
   describe('getCacheStrategy', () => {
-    it('uses network-first for navigation requests (HTML pages)', () => {
-      expect(getCacheStrategy('GET', '/', 'navigate')).toBe('network-first')
-      expect(getCacheStrategy('GET', '/login', 'navigate')).toBe(
-        'network-first',
-      )
+    it('bypasses navigation requests to avoid Safari redirect errors', () => {
+      expect(getCacheStrategy('GET', '/', 'navigate')).toBe('passthrough')
+      expect(getCacheStrategy('GET', '/login', 'navigate')).toBe('passthrough')
     })
 
     it('uses cache-first for static assets', () => {
@@ -94,6 +81,9 @@ describe('PWA service worker cache filtering', () => {
         'cache-first',
       )
       expect(getCacheStrategy('GET', '/manifest.json', 'same-origin')).toBe(
+        'cache-first',
+      )
+      expect(getCacheStrategy('GET', '/offline.html', 'same-origin')).toBe(
         'cache-first',
       )
     })
@@ -129,6 +119,36 @@ describe('PWA service worker cache filtering', () => {
       expect(getCacheStrategy('POST', '/assets/script.js', 'same-origin')).toBe(
         'passthrough',
       )
+    })
+  })
+
+  describe('redirect-safe response guards', () => {
+    it('rejects redirect responses for caching', () => {
+      expect(
+        isCacheableResponse({ status: 302, redirected: false, ok: false }),
+      ).toBe(false)
+      expect(
+        isCacheableResponse({ status: 307, redirected: true, ok: false }),
+      ).toBe(false)
+      expect(
+        isCacheableResponse({ status: 200, redirected: true, ok: true }),
+      ).toBe(false)
+    })
+
+    it('allows only successful final responses for caching', () => {
+      expect(
+        isCacheableResponse({ status: 200, redirected: false, ok: true }),
+      ).toBe(true)
+      expect(
+        isCacheableResponse({ status: 404, redirected: false, ok: false }),
+      ).toBe(false)
+    })
+
+    it('only serves cached entries with successful status codes', () => {
+      expect(isServeableCachedResponse(200)).toBe(true)
+      expect(isServeableCachedResponse(301)).toBe(false)
+      expect(isServeableCachedResponse(302)).toBe(false)
+      expect(isServeableCachedResponse(404)).toBe(false)
     })
   })
 })
