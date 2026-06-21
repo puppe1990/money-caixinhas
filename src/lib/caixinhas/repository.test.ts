@@ -280,8 +280,12 @@ describe('caixinhas repository', () => {
     expect(reserva?.savedCents).toBe(0)
     expect(viagem?.savedCents).toBe(3500)
 
-    const historico = await listHistoricoTransacoes(db, userId)
-    expect(historico[0]).toMatchObject({
+    const historico = await listHistoricoTransacoes(db, userId, {
+      month: 7,
+      year: 2026,
+      page: 1,
+    })
+    expect(historico.items[0]).toMatchObject({
       caixinhaId: caixinhaB.id,
       caixinhaName: 'Viagem',
       amountCents: 3500,
@@ -353,11 +357,126 @@ describe('caixinhas repository', () => {
 
     const depositRows = await db.select().from(depositos)
     const list = await listCaixinhasWithProgress(db, userId)
-    const historico = await listHistoricoTransacoes(db, userId)
+    const historico = await listHistoricoTransacoes(db, userId, {
+      month: 6,
+      year: 2026,
+      page: 1,
+    })
 
     expect(depositRows).toHaveLength(0)
     expect(list[0].savedCents).toBe(0)
-    expect(historico).toHaveLength(0)
+    expect(historico.total).toBe(0)
+    expect(historico.items).toHaveLength(0)
+  })
+
+  it('lista histórico de transações apenas do mês informado', async () => {
+    const caixinhaJunho = await createCaixinha(db, userId, {
+      name: 'Reserva',
+      targetAmountCents: 10000,
+      month: 6,
+      year: 2026,
+    })
+    const caixinhaJulho = await createCaixinha(db, userId, {
+      name: 'Viagem',
+      targetAmountCents: 20000,
+      month: 7,
+      year: 2026,
+    })
+
+    await addDeposito(db, userId, {
+      caixinhaId: caixinhaJunho.id,
+      amountCents: 1000,
+      day: 5,
+      month: 6,
+      year: 2026,
+    })
+    await addDeposito(db, userId, {
+      caixinhaId: caixinhaJulho.id,
+      amountCents: 2000,
+      day: 10,
+      month: 7,
+      year: 2026,
+    })
+
+    const historicoJunho = await listHistoricoTransacoes(db, userId, {
+      month: 6,
+      year: 2026,
+      page: 1,
+    })
+    const historicoJulho = await listHistoricoTransacoes(db, userId, {
+      month: 7,
+      year: 2026,
+      page: 1,
+    })
+
+    expect(historicoJunho.items).toHaveLength(1)
+    expect(historicoJunho.items[0]).toMatchObject({
+      caixinhaName: 'Reserva',
+      amountCents: 1000,
+      month: 6,
+      year: 2026,
+    })
+    expect(historicoJulho.items).toHaveLength(1)
+    expect(historicoJulho.items[0]).toMatchObject({
+      caixinhaName: 'Viagem',
+      amountCents: 2000,
+      month: 7,
+      year: 2026,
+    })
+  })
+
+  it('pagina histórico de transações', async () => {
+    const caixinha = await createCaixinha(db, userId, {
+      name: 'Reserva',
+      targetAmountCents: 100000,
+      month: 6,
+      year: 2026,
+    })
+
+    for (let day = 1; day <= 12; day += 1) {
+      await addDeposito(db, userId, {
+        caixinhaId: caixinha.id,
+        amountCents: day * 100,
+        day,
+        month: 6,
+        year: 2026,
+      })
+    }
+
+    const primeiraPagina = await listHistoricoTransacoes(db, userId, {
+      month: 6,
+      year: 2026,
+      page: 1,
+    })
+    const segundaPagina = await listHistoricoTransacoes(db, userId, {
+      month: 6,
+      year: 2026,
+      page: 2,
+    })
+    const paginaInexistente = await listHistoricoTransacoes(db, userId, {
+      month: 6,
+      year: 2026,
+      page: 99,
+    })
+
+    expect(primeiraPagina).toMatchObject({
+      total: 12,
+      page: 1,
+      pageSize: 10,
+      totalPages: 2,
+    })
+    expect(primeiraPagina.items).toHaveLength(10)
+    expect(primeiraPagina.items[0]).toMatchObject({ day: 12 })
+    expect(segundaPagina).toMatchObject({
+      total: 12,
+      page: 2,
+      pageSize: 10,
+      totalPages: 2,
+    })
+    expect(segundaPagina.items).toHaveLength(2)
+    expect(segundaPagina.items[0]).toMatchObject({ day: 2 })
+    expect(paginaInexistente.page).toBe(2)
+    expect(paginaInexistente.items).toHaveLength(2)
   })
 
   it('lança erro ao excluir transação inexistente', async () => {

@@ -26,6 +26,7 @@ import {
   calculateDailyGoal,
   formatCurrency,
   formatDepositDate,
+  HISTORICO_PAGE_SIZE,
   periodLabel,
   shiftPeriod,
 } from '#/lib/caixinhas/domain'
@@ -63,6 +64,7 @@ export function CaixinhasApp() {
   const period = currentPeriod()
   const [viewMonth, setViewMonth] = useState(period.month)
   const [viewYear, setViewYear] = useState(period.year)
+  const [historicoPage, setHistoricoPage] = useState(1)
   const [showNovaCaixinhaModal, setShowNovaCaixinhaModal] = useState(false)
   const [showDepositoModal, setShowDepositoModal] = useState(false)
   const [editingCaixinha, setEditingCaixinha] =
@@ -108,12 +110,42 @@ export function CaixinhasApp() {
     refetchOnMount: true,
   })
 
-  const { data: historico = [], isLoading: isLoadingHistorico } = useQuery({
-    queryKey: ['historico-transacoes'],
-    queryFn: () => getHistoricoTransacoes(),
+  useEffect(() => {
+    setHistoricoPage(1)
+  }, [viewMonth, viewYear])
+
+  const { data: historicoPageData, isLoading: isLoadingHistorico } = useQuery({
+    queryKey: ['historico-transacoes', viewMonth, viewYear, historicoPage],
+    queryFn: () =>
+      getHistoricoTransacoes({
+        data: { month: viewMonth, year: viewYear, page: historicoPage },
+      }),
     staleTime: 0,
     refetchOnMount: true,
   })
+
+  useEffect(() => {
+    if (!historicoPageData) {
+      return
+    }
+
+    if (historicoPageData.page !== historicoPage) {
+      setHistoricoPage(historicoPageData.page)
+    }
+  }, [historicoPageData, historicoPage])
+
+  const historico = historicoPageData?.items ?? []
+  const historicoTotal = historicoPageData?.total ?? 0
+  const historicoTotalPages = historicoPageData?.totalPages ?? 0
+  const historicoCurrentPage = historicoPageData?.page ?? historicoPage
+  const historicoRangeStart =
+    historicoTotal === 0
+      ? 0
+      : (historicoCurrentPage - 1) * HISTORICO_PAGE_SIZE + 1
+  const historicoRangeEnd =
+    historicoTotal === 0
+      ? 0
+      : Math.min(historicoCurrentPage * HISTORICO_PAGE_SIZE, historicoTotal)
 
   const createMutation = useMutation({
     mutationFn: createCaixinhaFn,
@@ -252,6 +284,18 @@ export function CaixinhasApp() {
     const next = shiftPeriod(viewMonth, viewYear, 1)
     setViewMonth(next.month)
     setViewYear(next.year)
+  }
+
+  function goToPreviousHistoricoPage() {
+    setHistoricoPage((current) => Math.max(1, current - 1))
+  }
+
+  function goToNextHistoricoPage() {
+    setHistoricoPage((current) =>
+      historicoTotalPages === 0
+        ? 1
+        : Math.min(historicoTotalPages, current + 1),
+    )
   }
 
   function openNovaCaixinhaModal() {
@@ -628,15 +672,16 @@ export function CaixinhasApp() {
             Histórico de transações
           </h2>
           <span className="text-sm text-slate-500">
-            {historico.length} registro{historico.length === 1 ? '' : 's'}
+            {periodLabel(viewMonth, viewYear)} · {historicoTotal} registro
+            {historicoTotal === 1 ? '' : 's'}
           </span>
         </div>
 
         {isLoadingHistorico ? (
           <p className="text-slate-600">Carregando histórico...</p>
-        ) : historico.length === 0 ? (
+        ) : historicoTotal === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-600">
-            Nenhuma transação registrada ainda.{' '}
+            Nenhuma transação em {periodLabel(viewMonth, viewYear)}.{' '}
             <button
               type="button"
               onClick={openDepositoModal}
@@ -738,6 +783,40 @@ export function CaixinhasApp() {
                 </tbody>
               </table>
             </div>
+
+            {historicoTotalPages > 1 ? (
+              <div className="flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-slate-500">
+                  Mostrando {historicoRangeStart}–{historicoRangeEnd} de{' '}
+                  {historicoTotal}
+                </p>
+                <div className="flex items-center justify-between gap-2 sm:justify-end">
+                  <button
+                    type="button"
+                    onClick={goToPreviousHistoricoPage}
+                    disabled={historicoCurrentPage <= 1}
+                    className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    aria-label="Página anterior"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Anterior
+                  </button>
+                  <span className="min-w-28 text-center text-sm text-slate-600">
+                    Página {historicoCurrentPage} de {historicoTotalPages}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={goToNextHistoricoPage}
+                    disabled={historicoCurrentPage >= historicoTotalPages}
+                    className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    aria-label="Próxima página"
+                  >
+                    Próxima
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            ) : null}
           </>
         )}
       </section>
