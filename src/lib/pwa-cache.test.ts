@@ -6,16 +6,34 @@ function isApiRequest(pathname: string): boolean {
   return API_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix))
 }
 
-function shouldCache(method: string, pathname: string): boolean {
+function isStaticAsset(pathname: string): boolean {
+  return /\.(css|js|png|ico|svg|woff2?|json)$/.test(pathname)
+}
+
+type CacheStrategy = 'network-first' | 'cache-first' | 'passthrough'
+
+function getCacheStrategy(
+  method: string,
+  pathname: string,
+  mode: RequestMode,
+): CacheStrategy {
   if (method !== 'GET') {
-    return false
+    return 'passthrough'
   }
 
   if (isApiRequest(pathname)) {
-    return false
+    return 'passthrough'
   }
 
-  return true
+  if (mode === 'navigate') {
+    return 'network-first'
+  }
+
+  if (isStaticAsset(pathname)) {
+    return 'cache-first'
+  }
+
+  return 'passthrough'
 }
 
 describe('PWA service worker cache filtering', () => {
@@ -27,84 +45,89 @@ describe('PWA service worker cache filtering', () => {
       )
     })
 
-    it('identifies TanStack SSR data URLs as API requests', () => {
-      expect(isApiRequest('/_tanstack/ssr-data/abc123')).toBe(true)
-    })
-
-    it('identifies build asset URLs as API/internal', () => {
-      expect(isApiRequest('/_build/assets/index.js')).toBe(true)
-    })
-
     it('does not flag regular page URLs as API', () => {
       expect(isApiRequest('/')).toBe(false)
       expect(isApiRequest('/login')).toBe(false)
-      expect(isApiRequest('/manifest.json')).toBe(false)
-    })
-
-    it('does not flag static assets as API', () => {
-      expect(isApiRequest('/logo192.png')).toBe(false)
-      expect(isApiRequest('/logo512.png')).toBe(false)
-      expect(isApiRequest('/favicon.ico')).toBe(false)
-      expect(isApiRequest('/apple-touch-icon.png')).toBe(false)
-    })
-
-    it('does not flag stylesheet URLs as API', () => {
-      expect(isApiRequest('/styles.css')).toBe(false)
     })
   })
 
-  describe('shouldCache', () => {
-    it('caches GET requests to the app root', () => {
-      expect(shouldCache('GET', '/')).toBe(true)
+  describe('isStaticAsset', () => {
+    it('identifies CSS files as static assets', () => {
+      expect(isStaticAsset('/assets/styles.css')).toBe(true)
     })
 
-    it('caches GET requests to static assets', () => {
-      expect(shouldCache('GET', '/manifest.json')).toBe(true)
-      expect(shouldCache('GET', '/logo192.png')).toBe(true)
-      expect(shouldCache('GET', '/favicon.ico')).toBe(true)
+    it('identifies JS files as static assets', () => {
+      expect(isStaticAsset('/assets/chunk.js')).toBe(true)
     })
 
-    it('caches GET requests to app pages', () => {
-      expect(shouldCache('GET', '/login')).toBe(true)
+    it('identifies PNG and ICO as static assets', () => {
+      expect(isStaticAsset('/logo192.png')).toBe(true)
+      expect(isStaticAsset('/favicon.ico')).toBe(true)
     })
 
-    it('does NOT cache server function GET calls', () => {
-      expect(shouldCache('GET', '/_tanstack/server-fn/getCaixinhas')).toBe(
-        false,
+    it('identifies JSON files as static assets', () => {
+      expect(isStaticAsset('/manifest.json')).toBe(true)
+    })
+
+    it('does not identify HTML pages as static assets', () => {
+      expect(isStaticAsset('/')).toBe(false)
+      expect(isStaticAsset('/login')).toBe(false)
+    })
+  })
+
+  describe('getCacheStrategy', () => {
+    it('uses network-first for navigation requests (HTML pages)', () => {
+      expect(getCacheStrategy('GET', '/', 'navigate')).toBe('network-first')
+      expect(getCacheStrategy('GET', '/login', 'navigate')).toBe(
+        'network-first',
       )
+    })
+
+    it('uses cache-first for static assets', () => {
+      expect(getCacheStrategy('GET', '/assets/index.js', 'same-origin')).toBe(
+        'cache-first',
+      )
+      expect(getCacheStrategy('GET', '/styles.css', 'same-origin')).toBe(
+        'cache-first',
+      )
+      expect(getCacheStrategy('GET', '/logo192.png', 'same-origin')).toBe(
+        'cache-first',
+      )
+      expect(getCacheStrategy('GET', '/manifest.json', 'same-origin')).toBe(
+        'cache-first',
+      )
+    })
+
+    it('uses passthrough for API calls (server functions)', () => {
       expect(
-        shouldCache('GET', '/_tanstack/server-fn/getHistoricoTransacoes'),
-      ).toBe(false)
+        getCacheStrategy(
+          'GET',
+          '/_tanstack/server-fn/getCaixinhas',
+          'same-origin',
+        ),
+      ).toBe('passthrough')
+      expect(
+        getCacheStrategy('GET', '/_tanstack/ssr-data/abc', 'same-origin'),
+      ).toBe('passthrough')
+      expect(
+        getCacheStrategy(
+          'POST',
+          '/_tanstack/server-fn/createCaixinhaFn',
+          'same-origin',
+        ),
+      ).toBe('passthrough')
     })
 
-    it('does NOT cache SSR data requests', () => {
-      expect(shouldCache('GET', '/_tanstack/ssr-data/some-hash')).toBe(false)
+    it('uses passthrough for build internal requests', () => {
+      expect(
+        getCacheStrategy('GET', '/_build/assets/chunk.js', 'same-origin'),
+      ).toBe('passthrough')
     })
 
-    it('does NOT cache any _tanstack prefixed requests', () => {
-      expect(shouldCache('GET', '/_tanstack/anything')).toBe(false)
-    })
-
-    it('does NOT cache build asset requests', () => {
-      expect(shouldCache('GET', '/_build/assets/chunk.js')).toBe(false)
-    })
-
-    it('does NOT cache non-GET requests', () => {
-      expect(shouldCache('POST', '/')).toBe(false)
-      expect(shouldCache('PUT', '/')).toBe(false)
-      expect(shouldCache('DELETE', '/')).toBe(false)
-      expect(shouldCache('POST', '/manifest.json')).toBe(false)
-    })
-
-    it('does NOT cache POST server function calls', () => {
-      expect(shouldCache('POST', '/_tanstack/server-fn/createCaixinhaFn')).toBe(
-        false,
-      )
-      expect(shouldCache('POST', '/_tanstack/server-fn/addDepositoFn')).toBe(
-        false,
-      )
-      expect(shouldCache('POST', '/_tanstack/server-fn/updateCaixinhaFn')).toBe(
-        false,
+    it('uses passthrough for non-GET requests', () => {
+      expect(getCacheStrategy('POST', '/', 'navigate')).toBe('passthrough')
+      expect(getCacheStrategy('POST', '/assets/script.js', 'same-origin')).toBe(
+        'passthrough',
       )
     })
   })

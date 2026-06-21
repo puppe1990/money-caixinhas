@@ -1,8 +1,7 @@
-const CACHE_VERSION = 'v2'
+const CACHE_VERSION = 'v3'
 const CACHE_NAME = `caixinhas-${CACHE_VERSION}`
 
 const PRECACHE_URLS = [
-  '/',
   '/manifest.json',
   '/logo192.png',
   '/logo512.png',
@@ -17,18 +16,8 @@ function isApiRequest(url) {
   return API_PATH_PREFIXES.some((prefix) => url.pathname.startsWith(prefix))
 }
 
-function shouldCache(request) {
-  if (request.method !== 'GET') {
-    return false
-  }
-
-  const url = new URL(request.url)
-
-  if (isApiRequest(url)) {
-    return false
-  }
-
-  return true
+function isStaticAsset(url) {
+  return /\.(css|js|png|ico|svg|woff2?|json)$/.test(url.pathname)
 }
 
 self.addEventListener('install', (event) => {
@@ -53,31 +42,57 @@ self.addEventListener('activate', (event) => {
   self.clients.claim()
 })
 
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting()
+  }
+})
+
 self.addEventListener('fetch', (event) => {
-  if (!shouldCache(event.request)) {
+  if (event.request.method !== 'GET') {
     return
   }
 
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) {
-        return cached
-      }
+  const url = new URL(event.request.url)
 
-      return fetch(event.request)
+  if (isApiRequest(url)) {
+    return
+  }
+
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
         .then((response) => {
-          if (!response.ok || response.type === 'opaque') {
-            return response
-          }
-
           const copy = response.clone()
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, copy)
           })
-
           return response
         })
-        .catch(() => caches.match('/'))
-    }),
-  )
+        .catch(() =>
+          caches.match(event.request).then((c) => c || caches.match('/')),
+        ),
+    )
+    return
+  }
+
+  if (isStaticAsset(url)) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        return (
+          cached ||
+          fetch(event.request).then((response) => {
+            if (!response.ok) {
+              return response
+            }
+            const copy = response.clone()
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, copy)
+            })
+            return response
+          })
+        )
+      }),
+    )
+  }
 })
