@@ -1,11 +1,16 @@
 import { useEffect, useState } from 'react'
 
-import { formatCentsToMoneyInput, periodLabel } from '#/lib/caixinhas/domain'
+import {
+  formatCentsToMoneyInput,
+  periodLabel,
+  shiftPeriod,
+} from '#/lib/caixinhas/domain'
 import type {
   CaixinhaProgress,
   TransacaoHistorico,
 } from '#/lib/caixinhas/types'
 
+import { DayPicker } from './DayPicker'
 import { MoneyInputWithCalculator } from './MoneyInputWithCalculator'
 
 const MONTHS = [
@@ -180,45 +185,56 @@ export function EditTransacaoModal({
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
-            <label className="block space-y-1 text-sm">
-              <span className="font-medium text-slate-700">Dia</span>
-              <input
-                className="w-full rounded-lg border border-slate-300 px-3 py-2"
-                type="number"
-                min={1}
-                max={31}
-                value={day}
-                onChange={(event) => setDay(Number(event.target.value))}
-                required
-              />
-            </label>
-            <label className="block space-y-1 text-sm">
-              <span className="font-medium text-slate-700">Mês</span>
-              <select
-                className="w-full rounded-lg border border-slate-300 px-3 py-2"
-                value={month}
-                onChange={(event) => setMonth(Number(event.target.value))}
-              >
-                {MONTHS.map((item) => (
-                  <option key={item.value} value={item.value}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block space-y-1 text-sm">
-              <span className="font-medium text-slate-700">Ano</span>
-              <input
-                className="w-full rounded-lg border border-slate-300 px-3 py-2"
-                type="number"
-                min={2000}
-                max={2100}
-                value={year}
-                onChange={(event) => setYear(Number(event.target.value))}
-                required
-              />
-            </label>
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-slate-700">Data</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block space-y-1 text-sm">
+                <span className="font-medium text-slate-700">Mês</span>
+                <select
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                  value={month}
+                  onChange={(event) => setMonth(Number(event.target.value))}
+                >
+                  {MONTHS.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {item.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block space-y-1 text-sm">
+                <span className="font-medium text-slate-700">Ano</span>
+                <input
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                  type="number"
+                  min={2000}
+                  max={2100}
+                  value={year}
+                  onChange={(event) => setYear(Number(event.target.value))}
+                  required
+                />
+              </label>
+            </div>
+
+            <DayPicker
+              selectedDay={day}
+              month={month}
+              year={year}
+              onSelectDay={setDay}
+              onPrevMonth={() => {
+                const prev = shiftPeriod(month, year, -1)
+                setMonth(prev.month)
+                setYear(prev.year)
+              }}
+              onNextMonth={() => {
+                const next = shiftPeriod(month, year, 1)
+                setMonth(next.month)
+                setYear(next.year)
+              }}
+            />
           </div>
 
           <div className="flex flex-col gap-3 pt-2 sm:flex-row">
