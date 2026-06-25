@@ -45,7 +45,7 @@ describe('HistoricoTransacoesList', () => {
     ).toBeInTheDocument()
   })
 
-  it('exige confirmação antes de excluir transação', async () => {
+  it('abre modal de confirmação antes de excluir transação', async () => {
     const user = userEvent.setup()
     const onDelete = vi.fn().mockResolvedValue(undefined)
 
@@ -64,13 +64,41 @@ describe('HistoricoTransacoesList', () => {
 
     await user.click(deleteButton)
     expect(onDelete).not.toHaveBeenCalled()
-    expect(
-      within(desktop).getByRole('button', { name: 'Confirmar exclusão' }),
-    ).toBeInTheDocument()
+
+    const modal = screen.getByRole('dialog', { name: 'Excluir transação' })
+    expect(within(modal).getByText(/tem certeza/i)).toBeInTheDocument()
+    expect(within(modal).getByText('Creche')).toBeInTheDocument()
 
     await user.click(
-      within(desktop).getByRole('button', { name: 'Confirmar exclusão' }),
+      within(modal).getByRole('button', { name: 'Sim, excluir' }),
     )
     expect(onDelete).toHaveBeenCalledWith(transacao)
+    expect(
+      screen.queryByRole('dialog', { name: 'Excluir transação' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('fecha modal de confirmação sem excluir ao cancelar', async () => {
+    const user = userEvent.setup()
+    const onDelete = vi.fn()
+
+    render(
+      <HistoricoTransacoesList
+        historico={[transacao]}
+        onEdit={vi.fn()}
+        onDelete={onDelete}
+      />,
+    )
+
+    const desktop = screen.getByTestId('historico-transacoes-desktop')
+    await user.click(within(desktop).getByRole('button', { name: 'Excluir' }))
+
+    const modal = screen.getByRole('dialog', { name: 'Excluir transação' })
+    await user.click(within(modal).getByRole('button', { name: 'Cancelar' }))
+
+    expect(onDelete).not.toHaveBeenCalled()
+    expect(
+      screen.queryByRole('dialog', { name: 'Excluir transação' }),
+    ).not.toBeInTheDocument()
   })
 })

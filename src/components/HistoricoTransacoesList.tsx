@@ -1,5 +1,6 @@
 import { useState } from 'react'
 
+import { ConfirmDeleteModal } from '#/components/ConfirmDeleteModal'
 import {
   formatCurrency,
   formatDepositDate,
@@ -22,37 +23,30 @@ export function HistoricoTransacoesList({
   onEdit,
   onDelete,
 }: HistoricoTransacoesListProps) {
-  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
+  const [transacaoToDelete, setTransacaoToDelete] =
+    useState<TransacaoHistorico | null>(null)
 
-  async function handleDeleteClick(transacao: TransacaoHistorico) {
-    if (confirmDeleteId !== transacao.id) {
-      setConfirmDeleteId(transacao.id)
+  async function handleConfirmDelete() {
+    if (!transacaoToDelete) {
       return
     }
 
-    await onDelete(transacao)
-    setConfirmDeleteId(null)
+    await onDelete(transacaoToDelete)
+    setTransacaoToDelete(null)
   }
 
   function renderDeleteButton(
     transacao: TransacaoHistorico,
     className: string,
   ) {
-    const isConfirming = confirmDeleteId === transacao.id
-    const isDeletingThis = isDeleting && deletingTransacaoId === transacao.id
-
     return (
       <button
         type="button"
-        onClick={() => void handleDeleteClick(transacao)}
+        onClick={() => setTransacaoToDelete(transacao)}
         disabled={isDeleting}
         className={className}
       >
-        {isDeletingThis
-          ? 'Excluindo...'
-          : isConfirming
-            ? 'Confirmar exclusão'
-            : 'Excluir'}
+        Excluir
       </button>
     )
   }
@@ -161,6 +155,31 @@ export function HistoricoTransacoesList({
           </tbody>
         </table>
       </div>
+
+      <ConfirmDeleteModal
+        open={transacaoToDelete !== null}
+        title="Excluir transação"
+        message="Tem certeza que deseja excluir esta transação? O valor será removido do progresso da caixinha."
+        isDeleting={isDeleting && deletingTransacaoId === transacaoToDelete?.id}
+        onClose={() => setTransacaoToDelete(null)}
+        onConfirm={handleConfirmDelete}
+      >
+        {transacaoToDelete ? (
+          <div className="space-y-1 text-sm">
+            <p className="font-semibold text-slate-900">
+              {transacaoToDelete.caixinhaName}
+            </p>
+            <p className="text-slate-600">
+              {formatDepositDate(
+                transacaoToDelete.day,
+                transacaoToDelete.month,
+                transacaoToDelete.year,
+              )}{' '}
+              · {formatCurrency(transacaoToDelete.amountCents)}
+            </p>
+          </div>
+        ) : null}
+      </ConfirmDeleteModal>
     </>
   )
 }
