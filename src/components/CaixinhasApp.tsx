@@ -661,6 +661,11 @@ export function CaixinhasApp() {
                   {formatCurrency(visibleGroup.totalTargetCents)} ·{' '}
                   {visibleGroup.totalPercent}%
                 </span>
+                <span className="rounded-xl bg-rose-50 px-3 py-2 text-sm font-medium text-rose-800">
+                  {visibleGroup.totalRemainingCents === 0
+                    ? 'Faltante do mês: concluído'
+                    : `Faltante do mês: ${formatCurrency(visibleGroup.totalRemainingCents)}`}
+                </span>
                 {hydrated && dailyGoal ? (
                   <span className="rounded-xl bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800">
                     {dailyGoal.dailyGoalCents === 0
