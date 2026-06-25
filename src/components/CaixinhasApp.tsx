@@ -17,6 +17,7 @@ import { useEffect, useRef, useState } from 'react'
 
 import { EditCaixinhaModal } from '#/components/EditCaixinhaModal'
 import { EditTransacaoModal } from '#/components/EditTransacaoModal'
+import { HistoricoTransacoesList } from '#/components/HistoricoTransacoesList'
 import { NovaCaixinhaModal } from '#/components/NovaCaixinhaModal'
 import { RegistrarDepositoModal } from '#/components/RegistrarDepositoModal'
 import { SortableCaixinhasGrid } from '#/components/SortableCaixinhasGrid'
@@ -25,7 +26,6 @@ import {
   buildPeriodGroup,
   calculateDailyGoal,
   formatCurrency,
-  formatDepositDate,
   HISTORICO_PAGE_SIZE,
   periodLabel,
   shiftPeriod,
@@ -77,6 +77,10 @@ export function CaixinhasApp() {
   const [depositoError, setDepositoError] = useState<string | null>(null)
   const [modalError, setModalError] = useState<string | null>(null)
   const [transacaoModalError, setTransacaoModalError] = useState<string | null>(
+    null,
+  )
+  const [historicoError, setHistoricoError] = useState<string | null>(null)
+  const [deletingTransacaoId, setDeletingTransacaoId] = useState<number | null>(
     null,
   )
   const [showTrocarSenhaModal, setShowTrocarSenhaModal] = useState(false)
@@ -233,6 +237,8 @@ export function CaixinhasApp() {
     mutationFn: deleteDepositoFn,
     onSuccess: async () => {
       setTransacaoModalError(null)
+      setHistoricoError(null)
+      setDeletingTransacaoId(null)
       setEditingTransacao(null)
       await queryClient.invalidateQueries({ queryKey: ['caixinhas'] })
       await queryClient.invalidateQueries({
@@ -240,9 +246,11 @@ export function CaixinhasApp() {
       })
     },
     onError: (err) => {
-      setTransacaoModalError(
-        err instanceof Error ? err.message : 'Erro ao excluir transação',
-      )
+      const message =
+        err instanceof Error ? err.message : 'Erro ao excluir transação'
+      setTransacaoModalError(message)
+      setHistoricoError(message)
+      setDeletingTransacaoId(null)
     },
   })
 
@@ -426,8 +434,17 @@ export function CaixinhasApp() {
       return
     }
 
+    setDeletingTransacaoId(editingTransacao.id)
     await deleteTransacaoMutation.mutateAsync({
       data: { id: editingTransacao.id },
+    })
+  }
+
+  async function handleDeleteTransacaoFromList(transacao: TransacaoHistorico) {
+    setHistoricoError(null)
+    setDeletingTransacaoId(transacao.id)
+    await deleteTransacaoMutation.mutateAsync({
+      data: { id: transacao.id },
     })
   }
 
@@ -693,96 +710,19 @@ export function CaixinhasApp() {
           </div>
         ) : (
           <>
-            <div className="space-y-3 md:hidden">
-              {historico.map((transacao) => (
-                <article
-                  key={transacao.id}
-                  className="rounded-xl border border-slate-100 bg-slate-50 p-4"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-semibold text-slate-900">
-                        {transacao.caixinhaName}
-                      </p>
-                      <p className="mt-1 text-sm text-slate-600">
-                        {formatDepositDate(
-                          transacao.day,
-                          transacao.month,
-                          transacao.year,
-                        )}
-                      </p>
-                      <p className="text-sm text-slate-500">
-                        {periodLabel(
-                          transacao.caixinhaMonth,
-                          transacao.caixinhaYear,
-                        )}
-                      </p>
-                    </div>
-                    <p className="shrink-0 text-base font-semibold text-emerald-700">
-                      {formatCurrency(transacao.amountCents)}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => openEditTransacaoModal(transacao)}
-                    className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-slate-200 bg-white text-sm font-medium text-slate-700 hover:bg-slate-100"
-                  >
-                    Editar transação
-                  </button>
-                </article>
-              ))}
-            </div>
+            {historicoError ? (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {historicoError}
+              </div>
+            ) : null}
 
-            <div className="hidden overflow-x-auto md:block">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-slate-200 text-slate-500">
-                    <th className="px-3 py-2 font-medium">Data</th>
-                    <th className="px-3 py-2 font-medium">Caixinha</th>
-                    <th className="px-3 py-2 font-medium">Período</th>
-                    <th className="px-3 py-2 text-right font-medium">Valor</th>
-                    <th className="px-3 py-2 text-right font-medium">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {historico.map((transacao) => (
-                    <tr
-                      key={transacao.id}
-                      className="border-b border-slate-100 last:border-0"
-                    >
-                      <td className="px-3 py-3 text-slate-700">
-                        {formatDepositDate(
-                          transacao.day,
-                          transacao.month,
-                          transacao.year,
-                        )}
-                      </td>
-                      <td className="px-3 py-3 font-medium text-slate-900">
-                        {transacao.caixinhaName}
-                      </td>
-                      <td className="px-3 py-3 text-slate-600">
-                        {periodLabel(
-                          transacao.caixinhaMonth,
-                          transacao.caixinhaYear,
-                        )}
-                      </td>
-                      <td className="px-3 py-3 text-right font-semibold text-emerald-700">
-                        {formatCurrency(transacao.amountCents)}
-                      </td>
-                      <td className="px-3 py-3 text-right">
-                        <button
-                          type="button"
-                          onClick={() => openEditTransacaoModal(transacao)}
-                          className="inline-flex min-h-10 items-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-100"
-                        >
-                          Editar
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <HistoricoTransacoesList
+              historico={historico}
+              isDeleting={deleteTransacaoMutation.isPending}
+              deletingTransacaoId={deletingTransacaoId}
+              onEdit={openEditTransacaoModal}
+              onDelete={handleDeleteTransacaoFromList}
+            />
 
             {historicoTotalPages > 1 ? (
               <div className="flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
