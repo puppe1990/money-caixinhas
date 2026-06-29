@@ -2,6 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
 
 import { db } from '#/db'
+import { parseServerInput } from '#/lib/server/parse-input'
 
 import { authMiddleware } from './middleware'
 import {
@@ -26,7 +27,7 @@ const credentialsSchema = z.object({
 })
 
 export const loginFn = createServerFn({ method: 'POST' })
-  .validator((data: unknown) => credentialsSchema.parse(data))
+  .validator((data: unknown) => parseServerInput(credentialsSchema, data))
   .handler(async ({ data }) => {
     const user = await verifyUserCredentials(db, data)
 
@@ -44,7 +45,7 @@ export const loginFn = createServerFn({ method: 'POST' })
   })
 
 export const signupFn = createServerFn({ method: 'POST' })
-  .validator((data: unknown) => credentialsSchema.parse(data))
+  .validator((data: unknown) => parseServerInput(credentialsSchema, data))
   .handler(async ({ data }) => {
     const email = data.email.trim().toLowerCase()
     const existing = await findUserByEmail(db, email)
@@ -81,7 +82,7 @@ const changePasswordSchema = z.object({
 
 export const changePasswordFn = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .validator((data: unknown) => changePasswordSchema.parse(data))
+  .validator((data: unknown) => parseServerInput(changePasswordSchema, data))
   .handler(async ({ data, context }) => {
     await changeUserPassword(db, context.userId, data)
 
