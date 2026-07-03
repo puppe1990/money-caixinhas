@@ -22,6 +22,7 @@ import { NovaCaixinhaModal } from '#/components/NovaCaixinhaModal'
 import { RegistrarDepositoModal } from '#/components/RegistrarDepositoModal'
 import { SortableCaixinhasGrid } from '#/components/SortableCaixinhasGrid'
 import { TrocarSenhaModal } from '#/components/TrocarSenhaModal'
+import { VerCaixinhaModal } from '#/components/VerCaixinhaModal'
 import {
   buildPeriodGroup,
   calculateDailyGoal,
@@ -40,6 +41,7 @@ import {
   deleteCaixinhaFn,
   deleteDepositoFn,
   getCaixinhas,
+  getDepositos,
   getHistoricoTransacoes,
   reorderCaixinhasFn,
   updateCaixinhaFn,
@@ -68,6 +70,8 @@ export function CaixinhasApp() {
   const [showNovaCaixinhaModal, setShowNovaCaixinhaModal] = useState(false)
   const [showDepositoModal, setShowDepositoModal] = useState(false)
   const [editingCaixinha, setEditingCaixinha] =
+    useState<CaixinhaProgress | null>(null)
+  const [viewingCaixinha, setViewingCaixinha] =
     useState<CaixinhaProgress | null>(null)
   const [editingTransacao, setEditingTransacao] =
     useState<TransacaoHistorico | null>(null)
@@ -112,6 +116,12 @@ export function CaixinhasApp() {
     queryFn: () => getCaixinhas(),
     staleTime: 0,
     refetchOnMount: true,
+  })
+
+  const { data: viewingDepositos = [] } = useQuery({
+    queryKey: ['depositos', viewingCaixinha?.id],
+    queryFn: () => getDepositos({ data: { caixinhaId: viewingCaixinha!.id } }),
+    enabled: viewingCaixinha !== null,
   })
 
   useEffect(() => {
@@ -337,6 +347,7 @@ export function CaixinhasApp() {
     targetAmount: string
     month: number
     year: number
+    observacao?: string
   }) {
     await createMutation.mutateAsync({ data })
     setViewMonth(data.month)
@@ -351,6 +362,14 @@ export function CaixinhasApp() {
     year: number
   }) {
     await depositMutation.mutateAsync({ data })
+  }
+
+  function openViewModal(caixinha: CaixinhaProgress) {
+    setViewingCaixinha(caixinha)
+  }
+
+  function closeViewModal() {
+    setViewingCaixinha(null)
   }
 
   function openEditModal(caixinha: CaixinhaProgress) {
@@ -371,6 +390,7 @@ export function CaixinhasApp() {
     targetAmount: string
     month: number
     year: number
+    observacao?: string
   }) {
     if (!editingCaixinha) {
       return
@@ -683,6 +703,7 @@ export function CaixinhasApp() {
               isReordering={reorderMutation.isPending}
               onReorder={handleReorder}
               onEdit={openEditModal}
+              onView={openViewModal}
             />
           </div>
         )}
@@ -798,6 +819,13 @@ export function CaixinhasApp() {
         onClose={closeEditModal}
         onSave={handleUpdate}
         onDelete={handleDelete}
+      />
+
+      <VerCaixinhaModal
+        caixinha={viewingCaixinha}
+        depositos={viewingDepositos}
+        open={viewingCaixinha !== null}
+        onClose={closeViewModal}
       />
 
       <EditTransacaoModal
