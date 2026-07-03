@@ -58,6 +58,7 @@ export const createCaixinhaFn = createServerFn({ method: 'POST' })
       targetAmountCents,
       month: data.month,
       year: data.year,
+      observacao: data.observacao,
     })
   })
 
@@ -87,6 +88,7 @@ export const updateCaixinhaFn = createServerFn({ method: 'POST' })
       targetAmountCents,
       month: data.month,
       year: data.year,
+      observacao: data.observacao,
     })
   })
 

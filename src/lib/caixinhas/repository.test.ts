@@ -485,3 +485,82 @@ describe('caixinhas repository', () => {
     )
   })
 })
+
+describe('observacao da caixinha', () => {
+  let db: TestDatabase
+  let userId: number
+
+  beforeEach(async () => {
+    const { createTestDb } = await import('#/db/test-db')
+    db = await createTestDb()
+    userId = await createTestUser(db, 'observacao@test.com')
+  })
+
+  afterEach(async () => {
+    await db.close()
+  })
+
+  it('cria caixinha com observação', async () => {
+    const caixinha = await createCaixinha(db, userId, {
+      name: 'Viagem',
+      targetAmountCents: 50000,
+      month: 6,
+      year: 2026,
+      observacao: 'Reserva para férias',
+    })
+
+    expect(caixinha.observacao).toBe('Reserva para férias')
+  })
+
+  it('atualiza observação da caixinha', async () => {
+    const caixinha = await createCaixinha(db, userId, {
+      name: 'Viagem',
+      targetAmountCents: 50000,
+      month: 6,
+      year: 2026,
+      observacao: 'Texto antigo',
+    })
+
+    const updated = await updateCaixinha(db, userId, caixinha.id, {
+      name: 'Viagem',
+      targetAmountCents: 50000,
+      month: 6,
+      year: 2026,
+      observacao: 'Texto novo',
+    })
+
+    expect(updated.observacao).toBe('Texto novo')
+  })
+
+  it('lista caixinhas com observação no progresso', async () => {
+    await createCaixinha(db, userId, {
+      name: 'Com nota',
+      targetAmountCents: 10000,
+      month: 6,
+      year: 2026,
+      observacao: 'Lembrete importante',
+    })
+
+    await createCaixinha(db, userId, {
+      name: 'Sem nota',
+      targetAmountCents: 10000,
+      month: 6,
+      year: 2026,
+    })
+
+    const rows = await listCaixinhasWithProgress(db, userId)
+
+    expect(rows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: 'Com nota',
+          observacao: 'Lembrete importante',
+        }),
+        expect.objectContaining({
+          name: 'Sem nota',
+          observacao: null,
+        }),
+      ]),
+    )
+  })
+})

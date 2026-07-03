@@ -15,6 +15,7 @@ const FIELD_LABELS: Record<string, string> = {
   newPassword: 'nova senha',
   orderedIds: 'ordem das caixinhas',
   page: 'página',
+  observacao: 'observação',
 }
 
 function fieldLabel(path: PropertyKey[]): string {

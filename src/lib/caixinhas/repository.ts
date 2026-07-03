@@ -13,6 +13,15 @@ import type { CaixinhaProgress, HistoricoTransacoesPage } from './types'
 
 type Database = LibSQLDatabase<typeof schema>
 
+function normalizeObservacao(value: string | null | undefined) {
+  if (value == null) {
+    return null
+  }
+
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
+
 async function getCaixinhaForUser(
   db: Database,
   userId: number,
@@ -56,6 +65,7 @@ export async function createCaixinha(
     targetAmountCents: number
     month: number
     year: number
+    observacao?: string | null
   },
 ) {
   const [orderRow] = await db
@@ -80,6 +90,7 @@ export async function createCaixinha(
       month: input.month,
       year: input.year,
       sortOrder: (orderRow?.maxOrder ?? -1) + 1,
+      observacao: normalizeObservacao(input.observacao),
     })
     .returning()
 
@@ -183,6 +194,7 @@ export async function updateCaixinha(
     targetAmountCents: number
     month: number
     year: number
+    observacao?: string | null
   },
 ) {
   await getCaixinhaForUser(db, userId, id)
@@ -194,6 +206,7 @@ export async function updateCaixinha(
       targetAmountCents: input.targetAmountCents,
       month: input.month,
       year: input.year,
+      observacao: normalizeObservacao(input.observacao),
     })
     .where(and(eq(caixinhas.id, id), eq(caixinhas.userId, userId)))
     .returning()
@@ -268,6 +281,7 @@ export async function listCaixinhasWithProgress(
       month: caixinhas.month,
       year: caixinhas.year,
       targetAmountCents: caixinhas.targetAmountCents,
+      observacao: caixinhas.observacao,
       savedCents: sql<number>`coalesce(sum(${depositos.amountCents}), 0)`,
     })
     .from(caixinhas)
@@ -293,6 +307,7 @@ export async function listCaixinhasWithProgress(
       month: row.month,
       year: row.year,
       targetAmountCents: row.targetAmountCents,
+      observacao: row.observacao ?? null,
       savedCents: progress.savedCents,
       remainingCents: progress.remainingCents,
       percent: progress.percent,
