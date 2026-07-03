@@ -31,6 +31,7 @@ type EditCaixinhaModalProps = {
     targetAmount: string
     month: number
     year: number
+    observacao?: string
   }) => Promise<void>
   onDelete: () => Promise<void>
 }
@@ -47,6 +48,7 @@ export function EditCaixinhaModal({
 }: EditCaixinhaModalProps) {
   const [name, setName] = useState('')
   const [targetAmount, setTargetAmount] = useState('')
+  const [observacao, setObservacao] = useState('')
   const [month, setMonth] = useState(1)
   const [year, setYear] = useState(new Date().getFullYear())
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -58,6 +60,7 @@ export function EditCaixinhaModal({
 
     setName(caixinha.name)
     setTargetAmount(formatCentsToMoneyInput(caixinha.targetAmountCents))
+    setObservacao(caixinha.observacao ?? '')
     setMonth(caixinha.month)
     setYear(caixinha.year)
     setConfirmDelete(false)
@@ -69,7 +72,13 @@ export function EditCaixinhaModal({
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
-    await onSave({ name, targetAmount, month, year })
+    await onSave({
+      name,
+      targetAmount,
+      month,
+      year,
+      observacao: observacao.trim() || undefined,
+    })
   }
 
   async function handleDelete() {
@@ -122,6 +131,19 @@ export function EditCaixinhaModal({
             value={targetAmount}
             onChange={(event) => setTargetAmount(event.target.value)}
             required
+          />
+        </label>
+
+        <label className="block space-y-1 text-sm">
+          <span className="font-medium text-slate-700">
+            Observação (opcional)
+          </span>
+          <textarea
+            className="min-h-24 w-full rounded-lg border border-slate-300 px-3 py-2"
+            value={observacao}
+            onChange={(event) => setObservacao(event.target.value)}
+            maxLength={500}
+            placeholder="Detalhes, lembretes ou contexto da meta"
           />
         </label>
 
