@@ -14,6 +14,7 @@ export type CaixinhaProgress = {
   remainingCents: number
   percent: number
   completed: boolean
+  observacao: string | null
 }
 
 export type PeriodGroup = {

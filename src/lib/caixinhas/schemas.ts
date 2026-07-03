@@ -1,10 +1,17 @@
 import { z } from 'zod'
 
+const observacaoSchema = z
+  .string()
+  .max(500, 'Observação deve ter no máximo 500 caracteres')
+  .optional()
+  .nullable()
+
 export const createCaixinhaSchema = z.object({
   name: z.string().min(1, 'Nome obrigatório'),
   targetAmount: z.string().min(1, 'Meta obrigatória'),
   month: z.coerce.number().int().min(1).max(12),
   year: z.coerce.number().int().min(2000).max(2100),
+  observacao: observacaoSchema,
 })
 
 export const addDepositoSchema = z.object({

@@ -19,7 +19,7 @@ import { GripVertical } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 
 import { useMediaQuery } from '#/hooks/useMediaQuery'
-import { formatCurrency } from '#/lib/caixinhas/domain'
+import { formatCurrency, truncateObservacao } from '#/lib/caixinhas/domain'
 import type { CaixinhaProgress } from '#/lib/caixinhas/types'
 
 type SortableCaixinhasGridProps = {
@@ -29,17 +29,22 @@ type SortableCaixinhasGridProps = {
   isReordering: boolean
   onReorder: (orderedIds: number[]) => Promise<void>
   onEdit: (caixinha: CaixinhaProgress) => void
+  onView: (caixinha: CaixinhaProgress) => void
 }
 
 function CaixinhaCard({
   caixinha,
   onEdit,
+  onView,
   dragHandle,
 }: {
   caixinha: CaixinhaProgress
   onEdit: (caixinha: CaixinhaProgress) => void
+  onView: (caixinha: CaixinhaProgress) => void
   dragHandle?: ReactNode
 }) {
+  const observacaoPreview = truncateObservacao(caixinha.observacao)
+
   return (
     <article className="rounded-xl border border-slate-100 bg-slate-50 p-4">
       <div className="mb-3 flex items-start justify-between gap-3">
@@ -58,6 +63,14 @@ function CaixinhaCard({
               Concluída
             </span>
           ) : null}
+          <button
+            type="button"
+            onClick={() => onView(caixinha)}
+            aria-label={`Ver ${caixinha.name}`}
+            className="inline-flex min-h-10 items-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-100"
+          >
+            Ver
+          </button>
           <button
             type="button"
             onClick={() => onEdit(caixinha)}
@@ -85,6 +98,14 @@ function CaixinhaCard({
       <p className="mt-1 text-xs text-slate-500">
         Faltam {formatCurrency(caixinha.remainingCents)}
       </p>
+      {observacaoPreview ? (
+        <p
+          data-testid="caixinha-observacao-preview"
+          className="mt-2 text-xs text-slate-600"
+        >
+          {observacaoPreview}
+        </p>
+      ) : null}
     </article>
   )
 }
@@ -92,10 +113,12 @@ function CaixinhaCard({
 function SortableCaixinhaCard({
   caixinha,
   onEdit,
+  onView,
   isReordering,
 }: {
   caixinha: CaixinhaProgress
   onEdit: (caixinha: CaixinhaProgress) => void
+  onView: (caixinha: CaixinhaProgress) => void
   isReordering: boolean
 }) {
   const {
@@ -134,6 +157,7 @@ function SortableCaixinhaCard({
       <CaixinhaCard
         caixinha={caixinha}
         onEdit={onEdit}
+        onView={onView}
         dragHandle={dragHandle}
       />
     </div>
@@ -147,6 +171,7 @@ export function SortableCaixinhasGrid({
   isReordering,
   onReorder,
   onEdit,
+  onView,
 }: SortableCaixinhasGridProps) {
   const isDesktop = useMediaQuery('(min-width: 768px)')
   const [items, setItems] = useState(caixinhas)
@@ -190,7 +215,12 @@ export function SortableCaixinhasGrid({
     return (
       <div className={gridClassName} data-period={`${month}/${year}`}>
         {items.map((caixinha) => (
-          <CaixinhaCard key={caixinha.id} caixinha={caixinha} onEdit={onEdit} />
+          <CaixinhaCard
+            key={caixinha.id}
+            caixinha={caixinha}
+            onEdit={onEdit}
+            onView={onView}
+          />
         ))}
       </div>
     )
@@ -212,6 +242,7 @@ export function SortableCaixinhasGrid({
               key={caixinha.id}
               caixinha={caixinha}
               onEdit={onEdit}
+              onView={onView}
               isReordering={isReordering}
             />
           ))}

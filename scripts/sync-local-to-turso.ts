@@ -62,6 +62,7 @@ async function main() {
       month: row.month,
       year: row.year,
       sortOrder: row.sortOrder,
+      observacao: row.observacao,
       createdAt: row.createdAt,
     })
     console.log(`✓ caixinha: ${row.name}`)

@@ -53,6 +53,11 @@ async function main() {
     console.log('✓ Coluna caixinhas.user_id adicionada')
   }
 
+  if (!(await columnExists('caixinhas', 'observacao'))) {
+    await client.execute(`ALTER TABLE caixinhas ADD COLUMN observacao TEXT`)
+    console.log('✓ Coluna caixinhas.observacao adicionada')
+  }
+
   client.close()
 }
 
