@@ -7,6 +7,7 @@ import {
   groupCaixinhasByPeriod,
   parseMoneyToCents,
   shiftPeriod,
+  truncateObservacao,
   validateDepositDate,
   calculateDailyGoal,
   getDaysRemainingInMonth,
@@ -183,5 +184,28 @@ describe('calculateDailyGoal', () => {
       dailyGoalCents: 0,
       daysRemaining: 17,
     })
+  })
+})
+
+describe('truncateObservacao', () => {
+  it('retorna null quando observação é nula ou vazia', () => {
+    expect(truncateObservacao(null)).toBeNull()
+    expect(truncateObservacao('')).toBeNull()
+    expect(truncateObservacao('   ')).toBeNull()
+  })
+
+  it('retorna texto original quando cabe no limite', () => {
+    expect(truncateObservacao('Reserva para viagem')).toBe(
+      'Reserva para viagem',
+    )
+  })
+
+  it('trunca texto longo com reticências', () => {
+    const longText =
+      'Esta é uma observação bem longa que precisa ser cortada para caber no card da caixinha sem ocupar muito espaço'
+
+    expect(truncateObservacao(longText, 40)).toBe(
+      'Esta é uma observação bem longa que prec...',
+    )
   })
 })

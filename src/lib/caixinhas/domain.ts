@@ -1,6 +1,7 @@
 import type { CaixinhaProgress, DepositDate, PeriodGroup } from './types'
 
 export const HISTORICO_PAGE_SIZE = 10
+export const OBSERVACAO_PREVIEW_MAX_LENGTH = 80
 
 const MONTH_LABELS = [
   'Janeiro',
@@ -54,6 +55,26 @@ export function formatCentsToMoneyInput(cents: number): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })
+}
+
+export function truncateObservacao(
+  value: string | null | undefined,
+  maxLength = OBSERVACAO_PREVIEW_MAX_LENGTH,
+): string | null {
+  if (value == null) {
+    return null
+  }
+
+  const trimmed = value.trim()
+  if (!trimmed) {
+    return null
+  }
+
+  if (trimmed.length <= maxLength) {
+    return trimmed
+  }
+
+  return `${trimmed.slice(0, maxLength).trimEnd()}...`
 }
 
 export function validateDepositDate(date: DepositDate): DepositDate {
