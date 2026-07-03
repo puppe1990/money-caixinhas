@@ -30,6 +30,7 @@ export const caixinhas = sqliteTable('caixinhas', {
   month: integer('month').notNull(),
   year: integer('year').notNull(),
   sortOrder: integer('sort_order').notNull().default(0),
+  observacao: text('observacao'),
   createdAt: text('created_at')
     .notNull()
     .$defaultFn(() => new Date().toISOString()),

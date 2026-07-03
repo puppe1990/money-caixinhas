@@ -38,6 +38,7 @@ export async function createTestDb(): Promise<TestDatabase> {
       month INTEGER NOT NULL,
       year INTEGER NOT NULL,
       sort_order INTEGER NOT NULL DEFAULT 0,
+      observacao TEXT,
       created_at TEXT NOT NULL
     )
   `)
