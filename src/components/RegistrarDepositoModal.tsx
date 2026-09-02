@@ -32,6 +32,7 @@ type RegistrarDepositoModalProps = {
   defaultDay: number
   defaultMonth: number
   defaultYear: number
+  defaultAmount?: string
   onClose: () => void
   onSave: (data: {
     caixinhaId: number
@@ -51,6 +52,7 @@ export function RegistrarDepositoModal({
   defaultDay,
   defaultMonth,
   defaultYear,
+  defaultAmount = '',
   onClose,
   onSave,
 }: RegistrarDepositoModalProps) {
@@ -66,11 +68,18 @@ export function RegistrarDepositoModal({
     }
 
     setCaixinhaId(defaultCaixinhaId)
-    setAmount('')
+    setAmount(defaultAmount)
     setDay(defaultDay)
     setMonth(defaultMonth)
     setYear(defaultYear)
-  }, [open, defaultCaixinhaId, defaultDay, defaultMonth, defaultYear])
+  }, [
+    open,
+    defaultCaixinhaId,
+    defaultAmount,
+    defaultDay,
+    defaultMonth,
+    defaultYear,
+  ])
 
   if (!open) {
     return null

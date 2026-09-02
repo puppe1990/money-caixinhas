@@ -30,17 +30,20 @@ type SortableCaixinhasGridProps = {
   onReorder: (orderedIds: number[]) => Promise<void>
   onEdit: (caixinha: CaixinhaProgress) => void
   onView: (caixinha: CaixinhaProgress) => void
+  onPay: (caixinha: CaixinhaProgress) => void
 }
 
 function CaixinhaCard({
   caixinha,
   onEdit,
   onView,
+  onPay,
   dragHandle,
 }: {
   caixinha: CaixinhaProgress
   onEdit: (caixinha: CaixinhaProgress) => void
   onView: (caixinha: CaixinhaProgress) => void
+  onPay: (caixinha: CaixinhaProgress) => void
   dragHandle?: ReactNode
 }) {
   const observacaoPreview = truncateObservacao(caixinha.observacao)
@@ -70,6 +73,14 @@ function CaixinhaCard({
             className="inline-flex min-h-10 items-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-100"
           >
             Ver
+          </button>
+          <button
+            type="button"
+            onClick={() => onPay(caixinha)}
+            disabled={caixinha.completed}
+            className="inline-flex min-h-10 items-center rounded-lg bg-emerald-600 px-3 text-sm font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Pagar
           </button>
           <button
             type="button"
@@ -114,11 +125,13 @@ function SortableCaixinhaCard({
   caixinha,
   onEdit,
   onView,
+  onPay,
   isReordering,
 }: {
   caixinha: CaixinhaProgress
   onEdit: (caixinha: CaixinhaProgress) => void
   onView: (caixinha: CaixinhaProgress) => void
+  onPay: (caixinha: CaixinhaProgress) => void
   isReordering: boolean
 }) {
   const {
@@ -158,6 +171,7 @@ function SortableCaixinhaCard({
         caixinha={caixinha}
         onEdit={onEdit}
         onView={onView}
+        onPay={onPay}
         dragHandle={dragHandle}
       />
     </div>
@@ -172,6 +186,7 @@ export function SortableCaixinhasGrid({
   onReorder,
   onEdit,
   onView,
+  onPay,
 }: SortableCaixinhasGridProps) {
   const isDesktop = useMediaQuery('(min-width: 768px)')
   const [items, setItems] = useState(caixinhas)
@@ -220,6 +235,7 @@ export function SortableCaixinhasGrid({
             caixinha={caixinha}
             onEdit={onEdit}
             onView={onView}
+            onPay={onPay}
           />
         ))}
       </div>
@@ -243,6 +259,7 @@ export function SortableCaixinhasGrid({
               caixinha={caixinha}
               onEdit={onEdit}
               onView={onView}
+              onPay={onPay}
               isReordering={isReordering}
             />
           ))}

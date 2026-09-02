@@ -62,6 +62,7 @@ describe('SortableCaixinhasGrid', () => {
         onReorder={vi.fn()}
         onEdit={vi.fn()}
         onView={vi.fn()}
+        onPay={vi.fn()}
       />,
     )
 
@@ -82,6 +83,7 @@ describe('SortableCaixinhasGrid', () => {
         onReorder={vi.fn()}
         onEdit={vi.fn()}
         onView={vi.fn()}
+        onPay={vi.fn()}
       />,
     )
 
@@ -107,6 +109,7 @@ describe('SortableCaixinhasGrid', () => {
         onReorder={vi.fn()}
         onEdit={vi.fn()}
         onView={onView}
+        onPay={vi.fn()}
       />,
     )
 
