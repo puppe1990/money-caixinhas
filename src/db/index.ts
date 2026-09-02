@@ -11,8 +11,11 @@ const clientConfig = {
   ...(authToken ? { authToken } : {}),
 }
 
+const isServer = typeof window === 'undefined'
+const useNativeClient = isServer && url.startsWith('file:')
+
 async function createDb() {
-  if (import.meta.env.DEV && url.startsWith('file:')) {
+  if (useNativeClient) {
     const { createClient } = await import('@libsql/client')
     const { drizzle } = await import('drizzle-orm/libsql')
     const client = createClient(clientConfig)

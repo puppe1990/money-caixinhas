@@ -26,6 +26,7 @@ import { VerCaixinhaModal } from '#/components/VerCaixinhaModal'
 import {
   buildPeriodGroup,
   calculateDailyGoal,
+  formatCentsToMoneyInput,
   formatCurrency,
   HISTORICO_PAGE_SIZE,
   periodLabel,
@@ -69,6 +70,10 @@ export function CaixinhasApp() {
   const [historicoPage, setHistoricoPage] = useState(1)
   const [showNovaCaixinhaModal, setShowNovaCaixinhaModal] = useState(false)
   const [showDepositoModal, setShowDepositoModal] = useState(false)
+  const [depositoCaixinhaId, setDepositoCaixinhaId] = useState<number | null>(
+    null,
+  )
+  const [depositoDefaultAmount, setDepositoDefaultAmount] = useState('')
   const [editingCaixinha, setEditingCaixinha] =
     useState<CaixinhaProgress | null>(null)
   const [viewingCaixinha, setViewingCaixinha] =
@@ -331,6 +336,19 @@ export function CaixinhasApp() {
 
   function openDepositoModal() {
     setDepositoError(null)
+    setDepositoCaixinhaId(null)
+    setDepositoDefaultAmount('')
+    setShowDepositoModal(true)
+  }
+
+  function openPayModal(caixinha: CaixinhaProgress) {
+    setDepositoError(null)
+    setDepositoCaixinhaId(caixinha.id)
+    setDepositoDefaultAmount(
+      caixinha.remainingCents > 0
+        ? formatCentsToMoneyInput(caixinha.remainingCents)
+        : '',
+    )
     setShowDepositoModal(true)
   }
 
@@ -339,6 +357,8 @@ export function CaixinhasApp() {
       return
     }
     setDepositoError(null)
+    setDepositoCaixinhaId(null)
+    setDepositoDefaultAmount('')
     setShowDepositoModal(false)
   }
 
@@ -704,6 +724,7 @@ export function CaixinhasApp() {
               onReorder={handleReorder}
               onEdit={openEditModal}
               onView={openViewModal}
+              onPay={openPayModal}
             />
           </div>
         )}
@@ -798,11 +819,13 @@ export function CaixinhasApp() {
       />
 
       <RegistrarDepositoModal
+        key={`${depositoCaixinhaId ?? 'default'}-${depositoDefaultAmount}`}
         open={showDepositoModal}
         isSaving={depositMutation.isPending}
         error={depositoError}
         caixinhas={caixinhas}
-        defaultCaixinhaId={defaultCaixinhaId}
+        defaultCaixinhaId={depositoCaixinhaId ?? defaultCaixinhaId}
+        defaultAmount={depositoDefaultAmount}
         defaultDay={period.day}
         defaultMonth={viewMonth}
         defaultYear={viewYear}
