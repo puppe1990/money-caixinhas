@@ -5,12 +5,13 @@ import {
   useRouteContext,
 } from '@tanstack/react-router'
 import {
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   CopyPlus,
   KeyRound,
   LogOut,
-  MoreVertical,
+  PiggyBank,
   Plus,
   Wallet,
 } from 'lucide-react'
@@ -575,47 +576,52 @@ export function CaixinhasApp() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-5 p-4 pb-28 sm:space-y-6 sm:p-6 sm:pb-6 md:p-10">
-      <header className="space-y-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-xs font-medium uppercase tracking-wide text-emerald-700 sm:text-sm">
-              Metas financeiras
-            </p>
-            <h1 className="text-2xl font-bold text-slate-900 md:text-3xl">
-              Caixinhas
-            </h1>
-            <p className="mt-1 truncate text-sm text-slate-500 md:hidden">
-              {session.email}
-            </p>
+    <div className="mx-auto max-w-5xl space-y-5 p-4 sm:space-y-6 sm:p-6 md:p-10">
+      <header className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm">
+              <PiggyBank className="h-6 w-6" aria-hidden="true" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-xs font-medium tracking-wide text-emerald-700 uppercase">
+                Metas financeiras
+              </p>
+              <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">
+                Caixinhas
+              </h1>
+            </div>
           </div>
 
-          <div className="relative md:hidden" ref={accountMenuRef}>
-            {accountMenuOpen ? (
-              <button
-                type="button"
-                aria-label="Fechar menu da conta"
-                className="fixed inset-0 z-30 bg-slate-900/20"
-                onClick={() => setAccountMenuOpen(false)}
-              />
-            ) : null}
-
+          <div className="relative shrink-0" ref={accountMenuRef}>
             <button
               type="button"
               onClick={() => setAccountMenuOpen((open) => !open)}
-              className="relative z-40 inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 text-sm font-medium text-slate-700 hover:bg-slate-50 sm:px-3"
               aria-label="Menu da conta"
               aria-expanded={accountMenuOpen}
               aria-haspopup="menu"
             >
-              <MoreVertical className="h-5 w-5" />
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-xs font-semibold text-emerald-800">
+                {session.email.charAt(0).toUpperCase()}
+              </span>
+              <span className="hidden max-w-40 truncate sm:block">
+                {session.email}
+              </span>
+              <ChevronDown
+                className={`h-4 w-4 text-slate-400 transition-transform ${accountMenuOpen ? 'rotate-180' : ''}`}
+                aria-hidden="true"
+              />
             </button>
 
             {accountMenuOpen ? (
               <div
                 role="menu"
-                className="absolute right-0 z-40 mt-2 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
+                className="absolute right-0 z-40 mt-2 w-60 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
               >
+                <p className="truncate border-b border-slate-100 px-4 py-2 text-xs text-slate-500 sm:hidden">
+                  {session.email}
+                </p>
                 <button
                   type="button"
                   role="menuitem"
@@ -645,30 +651,11 @@ export function CaixinhasApp() {
           </div>
         </div>
 
-        <div className="hidden flex-wrap items-center justify-end gap-2 md:flex">
-          <span className="max-w-xs truncate rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800">
-            {session.email}
-          </span>
-          <button
-            type="button"
-            onClick={openTrocarSenhaModal}
-            className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-          >
-            <KeyRound className="h-4 w-4" />
-            Trocar senha
-          </button>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-          >
-            <LogOut className="h-4 w-4" />
-            Sair
-          </button>
+        <div className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-100 pt-4 sm:flex sm:flex-wrap sm:items-center">
           <button
             type="button"
             onClick={openNovaCaixinhaModal}
-            className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+            className="col-span-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white hover:bg-emerald-700 sm:col-span-1"
           >
             <Plus className="h-4 w-4" />
             Nova caixinha
@@ -677,20 +664,26 @@ export function CaixinhasApp() {
             type="button"
             onClick={openDepositoModal}
             disabled={caixinhas.length === 0}
-            className="inline-flex min-h-11 items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Registrar depósito
+            <Wallet className="h-4 w-4" />
+            Depósito
+          </button>
+          <button
+            type="button"
+            onClick={openClonarModal}
+            disabled={visibleGroup.caixinhas.length === 0}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <CopyPlus className="h-4 w-4" />
+            Clonar mês
           </button>
         </div>
       </header>
 
-      <section className="space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <h2 className="text-xl font-semibold text-slate-900">
-            Caixinhas por período
-          </h2>
-
-          <div className="flex w-full items-center justify-between gap-2 sm:w-auto">
+      <section className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={goToPreviousMonth}
@@ -699,9 +692,9 @@ export function CaixinhasApp() {
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
-            <span className="min-w-32 flex-1 text-center text-sm font-semibold text-slate-900 sm:flex-none">
+            <h2 className="min-w-32 text-center text-lg font-semibold text-slate-900">
               {periodLabel(viewMonth, viewYear)}
-            </span>
+            </h2>
             <button
               type="button"
               onClick={goToNextMonth}
@@ -710,17 +703,14 @@ export function CaixinhasApp() {
             >
               <ChevronRight className="h-5 w-5" />
             </button>
-            <button
-              type="button"
-              onClick={openClonarModal}
-              disabled={visibleGroup.caixinhas.length === 0}
-              className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-              aria-label="Clonar caixinhas para outro mês"
-            >
-              <CopyPlus className="h-4 w-4" />
-              <span className="hidden sm:inline">Clonar mês</span>
-            </button>
           </div>
+
+          {visibleGroup.caixinhas.length > 0 ? (
+            <span className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700">
+              {visibleGroup.caixinhas.length} caixinha
+              {visibleGroup.caixinhas.length === 1 ? '' : 's'}
+            </span>
+          ) : null}
         </div>
 
         {isLoading ? (
@@ -738,36 +728,24 @@ export function CaixinhasApp() {
           </div>
         ) : (
           <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-            <div className="space-y-3">
-              <div className="flex items-start justify-between gap-3">
-                <h3 className="text-lg font-semibold text-slate-900">
-                  {visibleGroup.label}
-                </h3>
-                <span className="shrink-0 rounded-full bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700">
-                  {visibleGroup.caixinhas.length} caixinha
-                  {visibleGroup.caixinhas.length === 1 ? '' : 's'}
+            <div className="grid gap-2 sm:flex sm:flex-wrap">
+              <span className="rounded-xl bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700">
+                Geral: {formatCurrency(visibleGroup.totalSavedCents)} /{' '}
+                {formatCurrency(visibleGroup.totalTargetCents)} ·{' '}
+                {visibleGroup.totalPercent}%
+              </span>
+              <span className="rounded-xl bg-rose-50 px-3 py-2 text-sm font-medium text-rose-800">
+                {visibleGroup.totalRemainingCents === 0
+                  ? 'Faltante do mês: concluído'
+                  : `Faltante do mês: ${formatCurrency(visibleGroup.totalRemainingCents)}`}
+              </span>
+              {hydrated && dailyGoal ? (
+                <span className="rounded-xl bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800">
+                  {dailyGoal.dailyGoalCents === 0
+                    ? 'Meta diária: concluída'
+                    : `Meta diária: ${formatCurrency(dailyGoal.dailyGoalCents)} · ${dailyGoal.daysRemaining} dia${dailyGoal.daysRemaining === 1 ? '' : 's'}`}
                 </span>
-              </div>
-
-              <div className="grid gap-2 sm:flex sm:flex-wrap">
-                <span className="rounded-xl bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700">
-                  Geral: {formatCurrency(visibleGroup.totalSavedCents)} /{' '}
-                  {formatCurrency(visibleGroup.totalTargetCents)} ·{' '}
-                  {visibleGroup.totalPercent}%
-                </span>
-                <span className="rounded-xl bg-rose-50 px-3 py-2 text-sm font-medium text-rose-800">
-                  {visibleGroup.totalRemainingCents === 0
-                    ? 'Faltante do mês: concluído'
-                    : `Faltante do mês: ${formatCurrency(visibleGroup.totalRemainingCents)}`}
-                </span>
-                {hydrated && dailyGoal ? (
-                  <span className="rounded-xl bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800">
-                    {dailyGoal.dailyGoalCents === 0
-                      ? 'Meta diária: concluída'
-                      : `Meta diária: ${formatCurrency(dailyGoal.dailyGoalCents)} · ${dailyGoal.daysRemaining} dia${dailyGoal.daysRemaining === 1 ? '' : 's'}`}
-                  </span>
-                ) : null}
-              </div>
+              ) : null}
             </div>
 
             <SortableCaixinhasGrid
@@ -935,31 +913,6 @@ export function CaixinhasApp() {
         onClose={closeTrocarSenhaModal}
         onSave={handleChangePassword}
       />
-
-      <nav
-        aria-label="Ações principais"
-        className="pb-safe fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur md:hidden"
-      >
-        <div className="grid grid-cols-2 gap-2 p-3">
-          <button
-            type="button"
-            onClick={openNovaCaixinhaModal}
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-3 text-sm font-semibold text-white hover:bg-emerald-700"
-          >
-            <Plus className="h-4 w-4" />
-            Nova caixinha
-          </button>
-          <button
-            type="button"
-            onClick={openDepositoModal}
-            disabled={caixinhas.length === 0}
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <Wallet className="h-4 w-4" />
-            Depósito
-          </button>
-        </div>
-      </nav>
     </div>
   )
 }
