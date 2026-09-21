@@ -219,6 +219,32 @@ export function shiftPeriod(
   }
 }
 
+export function caixinhaNameKey(name: string): string {
+  return name.trim().toLowerCase()
+}
+
+export function buildClonePlan(
+  source: CaixinhaProgress[],
+  target: CaixinhaProgress[],
+): { toClone: CaixinhaProgress[]; skipped: CaixinhaProgress[] } {
+  const targetNames = new Set(
+    target.map((caixinha) => caixinhaNameKey(caixinha.name)),
+  )
+  const toClone: CaixinhaProgress[] = []
+  const skipped: CaixinhaProgress[] = []
+
+  for (const caixinha of source) {
+    if (targetNames.has(caixinhaNameKey(caixinha.name))) {
+      skipped.push(caixinha)
+      continue
+    }
+
+    toClone.push(caixinha)
+  }
+
+  return { toClone, skipped }
+}
+
 export function buildPeriodGroup(
   month: number,
   year: number,

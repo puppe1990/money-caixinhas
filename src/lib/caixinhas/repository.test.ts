@@ -6,6 +6,7 @@ import { caixinhas, depositos } from '#/db/schema'
 import { createUser } from '#/lib/auth/repository'
 import {
   addDeposito,
+  clonePeriodoCaixinhas,
   createCaixinha,
   deleteCaixinha,
   listCaixinhasWithProgress,
@@ -483,6 +484,183 @@ describe('caixinhas repository', () => {
     await expect(deleteDeposito(db, userId, 999)).rejects.toThrow(
       'Transação não encontrada',
     )
+  })
+})
+
+describe('clone de período', () => {
+  let db: TestDatabase
+  let userId: number
+
+  beforeEach(async () => {
+    const { createTestDb } = await import('#/db/test-db')
+    db = await createTestDb()
+    userId = await createTestUser(db, 'clone@test.com')
+  })
+
+  afterEach(async () => {
+    await db.close()
+  })
+
+  async function listPeriod(month: number, year: number) {
+    const list = await listCaixinhasWithProgress(db, userId)
+    return list.filter(
+      (caixinha) => caixinha.month === month && caixinha.year === year,
+    )
+  }
+
+  it('copia metas, observação e ordem para o período de destino', async () => {
+    const viagem = await createCaixinha(db, userId, {
+      name: 'Viagem',
+      targetAmountCents: 50000,
+      month: 6,
+      year: 2026,
+      observacao: 'Férias de julho',
+    })
+    await createCaixinha(db, userId, {
+      name: 'Reserva',
+      targetAmountCents: 20000,
+      month: 6,
+      year: 2026,
+    })
+
+    await addDeposito(db, userId, {
+      caixinhaId: viagem.id,
+      amountCents: 15000,
+      day: 10,
+      month: 6,
+      year: 2026,
+    })
+
+    const result = await clonePeriodoCaixinhas(db, userId, {
+      sourceMonth: 6,
+      sourceYear: 2026,
+      targetMonth: 7,
+      targetYear: 2026,
+    })
+
+    expect(result).toEqual({ created: 2, skipped: 0 })
+
+    const destino = await listPeriod(7, 2026)
+    expect(destino.map((caixinha) => caixinha.name)).toEqual([
+      'Viagem',
+      'Reserva',
+    ])
+    expect(destino[0]).toMatchObject({
+      targetAmountCents: 50000,
+      observacao: 'Férias de julho',
+      savedCents: 0,
+      percent: 0,
+      completed: false,
+    })
+
+    const origem = await listPeriod(6, 2026)
+    expect(origem.find((caixinha) => caixinha.name === 'Viagem')).toMatchObject(
+      {
+        savedCents: 15000,
+      },
+    )
+
+    const depositRows = await db.select().from(depositos)
+    expect(depositRows).toHaveLength(1)
+  })
+
+  it('ignora caixinhas que já existem no destino', async () => {
+    await createCaixinha(db, userId, {
+      name: 'Viagem',
+      targetAmountCents: 50000,
+      month: 6,
+      year: 2026,
+    })
+    await createCaixinha(db, userId, {
+      name: 'Reserva',
+      targetAmountCents: 20000,
+      month: 6,
+      year: 2026,
+    })
+    await createCaixinha(db, userId, {
+      name: 'viagem',
+      targetAmountCents: 99999,
+      month: 7,
+      year: 2026,
+    })
+
+    const result = await clonePeriodoCaixinhas(db, userId, {
+      sourceMonth: 6,
+      sourceYear: 2026,
+      targetMonth: 7,
+      targetYear: 2026,
+    })
+
+    expect(result).toEqual({ created: 1, skipped: 1 })
+
+    const destino = await listPeriod(7, 2026)
+    expect(destino).toHaveLength(2)
+    expect(destino.map((caixinha) => caixinha.name)).toEqual([
+      'viagem',
+      'Reserva',
+    ])
+    expect(destino[0].targetAmountCents).toBe(99999)
+  })
+
+  it('adiciona as caixinhas clonadas no fim da ordem do destino', async () => {
+    await createCaixinha(db, userId, {
+      name: 'Viagem',
+      targetAmountCents: 50000,
+      month: 6,
+      year: 2026,
+    })
+    await createCaixinha(db, userId, {
+      name: 'Reserva',
+      targetAmountCents: 20000,
+      month: 7,
+      year: 2026,
+    })
+
+    await clonePeriodoCaixinhas(db, userId, {
+      sourceMonth: 6,
+      sourceYear: 2026,
+      targetMonth: 7,
+      targetYear: 2026,
+    })
+
+    const destino = await listPeriod(7, 2026)
+    expect(destino.map((caixinha) => caixinha.name)).toEqual([
+      'Reserva',
+      'Viagem',
+    ])
+  })
+
+  it('lança erro quando o período de origem está vazio', async () => {
+    await expect(
+      clonePeriodoCaixinhas(db, userId, {
+        sourceMonth: 6,
+        sourceYear: 2026,
+        targetMonth: 7,
+        targetYear: 2026,
+      }),
+    ).rejects.toThrow('Nenhuma caixinha no período de origem')
+  })
+
+  it('não clona caixinhas de outro usuário', async () => {
+    const otherUserId = await createTestUser(db, 'outro-clone@test.com')
+
+    await createCaixinha(db, otherUserId, {
+      name: 'Privada',
+      targetAmountCents: 10000,
+      month: 6,
+      year: 2026,
+    })
+
+    await expect(
+      clonePeriodoCaixinhas(db, userId, {
+        sourceMonth: 6,
+        sourceYear: 2026,
+        targetMonth: 7,
+        targetYear: 2026,
+      }),
+    ).rejects.toThrow('Nenhuma caixinha no período de origem')
+
+    expect(await listPeriod(7, 2026)).toHaveLength(0)
   })
 })
 

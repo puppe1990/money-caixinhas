@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
+import type { CaixinhaProgress } from './types'
 import {
+  buildClonePlan,
   calculateProgress,
   formatCentsToMoneyInput,
   formatCurrency,
@@ -12,6 +14,22 @@ import {
   calculateDailyGoal,
   getDaysRemainingInMonth,
 } from './domain'
+
+function buildCaixinha(
+  input: Partial<CaixinhaProgress> & { id: number; name: string },
+): CaixinhaProgress {
+  return {
+    month: 6,
+    year: 2026,
+    targetAmountCents: 10000,
+    savedCents: 0,
+    remainingCents: 10000,
+    percent: 0,
+    completed: false,
+    observacao: null,
+    ...input,
+  }
+}
 
 describe('parseMoneyToCents', () => {
   it('converte valor em reais para centavos', () => {
@@ -207,5 +225,53 @@ describe('truncateObservacao', () => {
     expect(truncateObservacao(longText, 40)).toBe(
       'Esta é uma observação bem longa que prec...',
     )
+  })
+})
+
+describe('buildClonePlan', () => {
+  it('clona todas as caixinhas quando o destino está vazio', () => {
+    const plan = buildClonePlan(
+      [
+        buildCaixinha({ id: 1, name: 'Viagem' }),
+        buildCaixinha({ id: 2, name: 'Reserva' }),
+      ],
+      [],
+    )
+
+    expect(plan.toClone.map((caixinha) => caixinha.name)).toEqual([
+      'Viagem',
+      'Reserva',
+    ])
+    expect(plan.skipped).toHaveLength(0)
+  })
+
+  it('ignora caixinhas com o mesmo nome no destino', () => {
+    const plan = buildClonePlan(
+      [
+        buildCaixinha({ id: 1, name: 'Viagem' }),
+        buildCaixinha({ id: 2, name: 'Reserva' }),
+      ],
+      [buildCaixinha({ id: 3, name: 'viagem' })],
+    )
+
+    expect(plan.toClone.map((caixinha) => caixinha.name)).toEqual(['Reserva'])
+    expect(plan.skipped.map((caixinha) => caixinha.name)).toEqual(['Viagem'])
+  })
+
+  it('ignora diferenças de espaço e maiúsculas no nome', () => {
+    const plan = buildClonePlan(
+      [buildCaixinha({ id: 1, name: '  Reserva  ' })],
+      [buildCaixinha({ id: 2, name: 'RESERVA' })],
+    )
+
+    expect(plan.toClone).toHaveLength(0)
+    expect(plan.skipped).toHaveLength(1)
+  })
+
+  it('não clona nada quando a origem está vazia', () => {
+    const plan = buildClonePlan([], [buildCaixinha({ id: 1, name: 'Viagem' })])
+
+    expect(plan.toClone).toHaveLength(0)
+    expect(plan.skipped).toHaveLength(0)
   })
 })
