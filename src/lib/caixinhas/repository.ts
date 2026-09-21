@@ -6,6 +6,7 @@ import type * as schema from '#/db/schema'
 
 import {
   calculateProgress,
+  caixinhaNameKey,
   HISTORICO_PAGE_SIZE,
   validateDepositDate,
 } from './domain'
@@ -268,6 +269,74 @@ export async function reorderCaixinhas(
         .where(and(eq(caixinhas.id, id), eq(caixinhas.userId, userId))),
     ),
   )
+}
+
+export async function clonePeriodoCaixinhas(
+  db: Database,
+  userId: number,
+  input: {
+    sourceMonth: number
+    sourceYear: number
+    targetMonth: number
+    targetYear: number
+  },
+) {
+  const sourceRows = await db
+    .select()
+    .from(caixinhas)
+    .where(
+      and(
+        eq(caixinhas.userId, userId),
+        eq(caixinhas.month, input.sourceMonth),
+        eq(caixinhas.year, input.sourceYear),
+      ),
+    )
+    .orderBy(asc(caixinhas.sortOrder), asc(caixinhas.name))
+
+  if (sourceRows.length === 0) {
+    throw new Error('Nenhuma caixinha no período de origem')
+  }
+
+  const targetRows = await db
+    .select({ name: caixinhas.name, sortOrder: caixinhas.sortOrder })
+    .from(caixinhas)
+    .where(
+      and(
+        eq(caixinhas.userId, userId),
+        eq(caixinhas.month, input.targetMonth),
+        eq(caixinhas.year, input.targetYear),
+      ),
+    )
+
+  const targetNames = new Set(
+    targetRows.map((row) => caixinhaNameKey(row.name)),
+  )
+  const lastOrder = targetRows.reduce(
+    (max, row) => Math.max(max, row.sortOrder),
+    -1,
+  )
+  const toClone = sourceRows.filter(
+    (row) => !targetNames.has(caixinhaNameKey(row.name)),
+  )
+
+  if (toClone.length > 0) {
+    await db.insert(caixinhas).values(
+      toClone.map((row, index) => ({
+        userId,
+        name: row.name,
+        targetAmountCents: row.targetAmountCents,
+        month: input.targetMonth,
+        year: input.targetYear,
+        sortOrder: lastOrder + 1 + index,
+        observacao: row.observacao,
+      })),
+    )
+  }
+
+  return {
+    created: toClone.length,
+    skipped: sourceRows.length - toClone.length,
+  }
 }
 
 export async function listCaixinhasWithProgress(

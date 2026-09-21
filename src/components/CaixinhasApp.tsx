@@ -7,6 +7,7 @@ import {
 import {
   ChevronLeft,
   ChevronRight,
+  CopyPlus,
   KeyRound,
   LogOut,
   MoreVertical,
@@ -15,6 +16,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
+import { ClonarCaixinhasModal } from '#/components/ClonarCaixinhasModal'
 import { EditCaixinhaModal } from '#/components/EditCaixinhaModal'
 import { EditTransacaoModal } from '#/components/EditTransacaoModal'
 import { HistoricoTransacoesList } from '#/components/HistoricoTransacoesList'
@@ -38,6 +40,7 @@ import type {
 } from '#/lib/caixinhas/types'
 import {
   addDepositoFn,
+  cloneCaixinhasFn,
   createCaixinhaFn,
   deleteCaixinhaFn,
   deleteDepositoFn,
@@ -69,6 +72,7 @@ export function CaixinhasApp() {
   const [viewYear, setViewYear] = useState(period.year)
   const [historicoPage, setHistoricoPage] = useState(1)
   const [showNovaCaixinhaModal, setShowNovaCaixinhaModal] = useState(false)
+  const [showClonarModal, setShowClonarModal] = useState(false)
   const [showDepositoModal, setShowDepositoModal] = useState(false)
   const [depositoCaixinhaId, setDepositoCaixinhaId] = useState<number | null>(
     null,
@@ -83,6 +87,7 @@ export function CaixinhasApp() {
   const [novaCaixinhaError, setNovaCaixinhaError] = useState<string | null>(
     null,
   )
+  const [clonarError, setClonarError] = useState<string | null>(null)
   const [depositoError, setDepositoError] = useState<string | null>(null)
   const [modalError, setModalError] = useState<string | null>(null)
   const [transacaoModalError, setTransacaoModalError] = useState<string | null>(
@@ -176,6 +181,20 @@ export function CaixinhasApp() {
     onError: (err) => {
       setNovaCaixinhaError(
         err instanceof Error ? err.message : 'Erro ao criar caixinha',
+      )
+    },
+  })
+
+  const cloneMutation = useMutation({
+    mutationFn: cloneCaixinhasFn,
+    onSuccess: async () => {
+      setClonarError(null)
+      setShowClonarModal(false)
+      await queryClient.invalidateQueries({ queryKey: ['caixinhas'] })
+    },
+    onError: (err) => {
+      setClonarError(
+        err instanceof Error ? err.message : 'Erro ao clonar caixinhas',
       )
     },
   })
@@ -372,6 +391,31 @@ export function CaixinhasApp() {
     await createMutation.mutateAsync({ data })
     setViewMonth(data.month)
     setViewYear(data.year)
+  }
+
+  function openClonarModal() {
+    setClonarError(null)
+    setShowClonarModal(true)
+  }
+
+  function closeClonarModal() {
+    if (cloneMutation.isPending) {
+      return
+    }
+
+    setClonarError(null)
+    setShowClonarModal(false)
+  }
+
+  async function handleClone(data: {
+    sourceMonth: number
+    sourceYear: number
+    targetMonth: number
+    targetYear: number
+  }) {
+    await cloneMutation.mutateAsync({ data })
+    setViewMonth(data.targetMonth)
+    setViewYear(data.targetYear)
   }
 
   async function handleDeposit(data: {
@@ -666,6 +710,16 @@ export function CaixinhasApp() {
             >
               <ChevronRight className="h-5 w-5" />
             </button>
+            <button
+              type="button"
+              onClick={openClonarModal}
+              disabled={visibleGroup.caixinhas.length === 0}
+              className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label="Clonar caixinhas para outro mês"
+            >
+              <CopyPlus className="h-4 w-4" />
+              <span className="hidden sm:inline">Clonar mês</span>
+            </button>
           </div>
         </div>
 
@@ -816,6 +870,17 @@ export function CaixinhasApp() {
         defaultYear={viewYear}
         onClose={closeNovaCaixinhaModal}
         onSave={handleCreate}
+      />
+
+      <ClonarCaixinhasModal
+        open={showClonarModal}
+        isSaving={cloneMutation.isPending}
+        error={clonarError}
+        sourceMonth={viewMonth}
+        sourceYear={viewYear}
+        caixinhas={caixinhas}
+        onClose={closeClonarModal}
+        onSave={handleClone}
       />
 
       <RegistrarDepositoModal

@@ -5,6 +5,7 @@ import { authMiddleware } from '#/lib/auth/middleware'
 import { parseMoneyToCents } from '#/lib/caixinhas/domain'
 import {
   addDepositoSchema,
+  cloneCaixinhasSchema,
   createCaixinhaSchema,
   deleteCaixinhaSchema,
   deleteDepositoSchema,
@@ -15,6 +16,7 @@ import {
 } from '#/lib/caixinhas/schemas'
 import {
   addDeposito,
+  clonePeriodoCaixinhas,
   createCaixinha,
   deleteCaixinha,
   listCaixinhasWithProgress,
@@ -120,6 +122,13 @@ export const reorderCaixinhasFn = createServerFn({ method: 'POST' })
   .handler(async ({ data, context }) => {
     await reorderCaixinhas(db, context.userId, data)
     return listCaixinhasWithProgress(db, context.userId)
+  })
+
+export const cloneCaixinhasFn = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
+  .validator((data: unknown) => parseServerInput(cloneCaixinhasSchema, data))
+  .handler(async ({ data, context }) => {
+    return clonePeriodoCaixinhas(db, context.userId, data)
   })
 
 export const deleteDepositoFn = createServerFn({ method: 'POST' })

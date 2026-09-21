@@ -4,6 +4,7 @@ import { ZodError } from 'zod'
 
 import { parseMoneyToCents } from '#/lib/caixinhas/domain'
 import {
+  cloneCaixinhasSchema,
   createCaixinhaSchema,
   updateCaixinhaSchema,
   updateDepositoSchema,
@@ -57,6 +58,41 @@ describe('updateCaixinhaSchema', () => {
     const parsed = parseServerInput(updateCaixinhaSchema, validPayload)
 
     expect(parsed.observacao).toBe('Atualizar meta em agosto')
+  })
+})
+
+describe('cloneCaixinhasSchema', () => {
+  const validPayload = {
+    sourceMonth: 6,
+    sourceYear: 2026,
+    targetMonth: 7,
+    targetYear: 2026,
+  }
+
+  it('aceita período de origem e de destino', () => {
+    expect(parseServerInput(cloneCaixinhasSchema, validPayload)).toEqual(
+      validPayload,
+    )
+  })
+
+  it('aceita números serializados como string', () => {
+    expect(
+      parseServerInput(cloneCaixinhasSchema, {
+        sourceMonth: '6',
+        sourceYear: '2026',
+        targetMonth: '7',
+        targetYear: '2026',
+      }),
+    ).toEqual(validPayload)
+  })
+
+  it('rejeita payload sem período de destino', () => {
+    expect(() =>
+      parseServerInput(cloneCaixinhasSchema, {
+        sourceMonth: 6,
+        sourceYear: 2026,
+      }),
+    ).toThrow()
   })
 })
 

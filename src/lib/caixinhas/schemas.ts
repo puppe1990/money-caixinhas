@@ -36,6 +36,13 @@ export const reorderCaixinhasSchema = z.object({
   orderedIds: z.array(z.coerce.number().int().positive()).min(1),
 })
 
+export const cloneCaixinhasSchema = z.object({
+  sourceMonth: z.coerce.number().int().min(1).max(12),
+  sourceYear: z.coerce.number().int().min(2000).max(2100),
+  targetMonth: z.coerce.number().int().min(1).max(12),
+  targetYear: z.coerce.number().int().min(2000).max(2100),
+})
+
 export const historicoPeriodSchema = z.object({
   month: z.coerce.number().int().min(1).max(12),
   year: z.coerce.number().int().min(2000).max(2100),
