@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import { devtools } from '@tanstack/devtools-vite'
 
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
-import netlify from '@netlify/vite-plugin-tanstack-start'
+import { nitro } from 'nitro/vite'
 
 import viteReact from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -11,7 +11,7 @@ const isTest = process.env.VITEST === 'true' || process.env.NODE_ENV === 'test'
 
 const config = defineConfig({
   resolve: { tsconfigPaths: true },
-  plugins: [devtools(), tailwindcss(), tanstackStart(), netlify(), viteReact()],
+  plugins: [devtools(), tailwindcss(), tanstackStart(), nitro(), viteReact()],
   test: {
     environment: 'node',
     include: ['src/**/*.test.{ts,tsx}'],
