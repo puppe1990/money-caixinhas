@@ -1,4 +1,4 @@
-export const SITE_URL = 'https://money-caixinhas.netlify.app'
+export const SITE_URL = 'https://caixinhas.apps.gestaobem.com'
 
 export const SITE_NAME = 'Caixinhas'
 
