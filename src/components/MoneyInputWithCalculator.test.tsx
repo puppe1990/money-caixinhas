@@ -102,4 +102,46 @@ describe('MoneyInputWithCalculator', () => {
     expect(onChange).toHaveBeenCalledWith('250,00')
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
   })
+
+  it('usa os números do teclado na calculadora', async () => {
+    const user = userEvent.setup()
+    const onChange = vi.fn()
+
+    render(<MoneyInputWithCalculator value="" onChange={onChange} />)
+
+    await user.click(screen.getByRole('button', { name: 'Abrir calculadora' }))
+    await user.keyboard('250+125{Enter}')
+
+    const dialog = screen.getByRole('dialog', { name: 'Calculadora' })
+    expect(dialog).toHaveTextContent('375')
+
+    await user.click(screen.getByRole('button', { name: 'Usar resultado' }))
+
+    expect(onChange).toHaveBeenCalledWith('375,00')
+  })
+
+  it('aceita Backspace, C e Esc pelo teclado', async () => {
+    const user = userEvent.setup()
+    const onChange = vi.fn()
+
+    render(<MoneyInputWithCalculator value="" onChange={onChange} />)
+
+    await user.click(screen.getByRole('button', { name: 'Abrir calculadora' }))
+    await user.keyboard('250{Backspace}')
+    expect(
+      screen.getByRole('dialog', { name: 'Calculadora' }),
+    ).toHaveTextContent('25')
+
+    await user.keyboard('c')
+    expect(
+      screen.getByRole('dialog', { name: 'Calculadora' }),
+    ).toHaveTextContent('0')
+
+    await user.keyboard('12{Escape}')
+
+    expect(
+      screen.queryByRole('dialog', { name: 'Calculadora' }),
+    ).not.toBeInTheDocument()
+    expect(onChange).not.toHaveBeenCalled()
+  })
 })

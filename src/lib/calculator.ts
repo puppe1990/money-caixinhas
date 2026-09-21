@@ -20,6 +20,42 @@ export type CalculatorKey =
   | '.'
   | 'C'
 
+export type CalculatorKeypadKey = CalculatorKey | 'backspace' | 'equals'
+
+export function keypadKeyFromKeyboard(key: string): CalculatorKeypadKey | null {
+  if (/^[0-9]$/.test(key)) {
+    return key as CalculatorKey
+  }
+
+  switch (key) {
+    case '+':
+    case '-':
+    case '*':
+    case '/':
+      return key
+    case 'x':
+    case 'X':
+    case '×':
+      return '*'
+    case '÷':
+      return '/'
+    case ',':
+    case '.':
+      return '.'
+    case 'Enter':
+    case '=':
+      return 'equals'
+    case 'Backspace':
+      return 'backspace'
+    case 'c':
+    case 'C':
+    case 'Delete':
+      return 'C'
+    default:
+      return null
+  }
+}
+
 export function clearCalculatorDisplay(): string {
   return INITIAL_CALCULATOR_DISPLAY
 }
