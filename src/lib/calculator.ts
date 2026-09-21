@@ -268,3 +268,45 @@ export function calculatorResultToMoneyInput(result: number): string {
 
   return formatCentsToMoneyInput(Math.round(result * 100))
 }
+
+function normalizePastedNumber(segment: string): string {
+  if (segment.includes(',')) {
+    return segment.replace(/\./g, '').replace(',', '.')
+  }
+
+  if (/^\d{1,3}(\.\d{3})+$/.test(segment)) {
+    return segment.replace(/\./g, '')
+  }
+
+  return segment
+}
+
+export function normalizePastedExpression(raw: string): string | null {
+  const cleaned = raw
+    .replace(/\s/g, '')
+    .replace(/r\$/gi, '')
+    .replace(/x/gi, '*')
+    .replace(/×/g, '*')
+    .replace(/÷/g, '/')
+    .replace(/=/g, '')
+
+  if (!cleaned || !/[+\-*/]/.test(cleaned) || !/^[\d.,+\-*/]+$/.test(cleaned)) {
+    return null
+  }
+
+  return cleaned.replace(/\d[\d.,]*/g, normalizePastedNumber)
+}
+
+export function pastedExpressionToMoneyInput(raw: string): string | null {
+  const normalized = normalizePastedExpression(raw)
+
+  if (!normalized) {
+    return null
+  }
+
+  try {
+    return calculatorResultToMoneyInput(evaluateCalculatorDisplay(normalized))
+  } catch {
+    return null
+  }
+}
