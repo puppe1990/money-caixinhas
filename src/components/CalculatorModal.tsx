@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Delete } from 'lucide-react'
 
 import {
@@ -7,8 +7,9 @@ import {
   backspaceCalculatorDisplay,
   calculatorResultToMoneyInput,
   evaluateCalculatorDisplay,
+  keypadKeyFromKeyboard,
   pressCalculatorKey,
-  type CalculatorKey,
+  type CalculatorKeypadKey,
 } from '#/lib/calculator'
 
 type CalculatorModalProps = {
@@ -17,7 +18,7 @@ type CalculatorModalProps = {
   onApply: (value: string) => void
 }
 
-type KeypadKey = CalculatorKey | 'backspace' | 'equals'
+type KeypadKey = CalculatorKeypadKey
 
 type KeypadButton =
   | { type: 'key'; key: KeypadKey; colSpan?: 1 | 2 }
@@ -98,6 +99,7 @@ export function CalculatorModal({
   onClose,
   onApply,
 }: CalculatorModalProps) {
+  const dialogRef = useRef<HTMLDivElement>(null)
   const [display, setDisplay] = useState(INITIAL_CALCULATOR_DISPLAY)
   const [error, setError] = useState<string | null>(null)
 
@@ -108,13 +110,10 @@ export function CalculatorModal({
 
     setDisplay(INITIAL_CALCULATOR_DISPLAY)
     setError(null)
+    dialogRef.current?.focus()
   }, [open])
 
-  if (!open) {
-    return null
-  }
-
-  function handleKeyPress(key: KeypadKey) {
+  const handleKeyPress = useCallback((key: KeypadKey) => {
     setError(null)
 
     if (key === 'equals') {
@@ -136,6 +135,50 @@ export function CalculatorModal({
     }
 
     setDisplay((current) => pressCalculatorKey(current, key))
+  }, [])
+
+  useEffect(() => {
+    if (!open) {
+      return
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.metaKey || event.ctrlKey || event.altKey) {
+        return
+      }
+
+      const target = event.target as HTMLElement | null
+      const isTextField =
+        target?.isContentEditable ||
+        target?.tagName === 'INPUT' ||
+        target?.tagName === 'TEXTAREA'
+
+      if (isTextField) {
+        return
+      }
+
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        onClose()
+        return
+      }
+
+      const key = keypadKeyFromKeyboard(event.key)
+
+      if (!key) {
+        return
+      }
+
+      event.preventDefault()
+      handleKeyPress(key)
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [open, onClose, handleKeyPress])
+
+  if (!open) {
+    return null
   }
 
   function handleApply() {
@@ -157,7 +200,9 @@ export function CalculatorModal({
       role="presentation"
     >
       <div
-        className="w-full max-w-xs rounded-2xl border border-slate-200 bg-white p-4 shadow-xl"
+        ref={dialogRef}
+        tabIndex={-1}
+        className="w-full max-w-xs rounded-2xl border border-slate-200 bg-white p-4 shadow-xl outline-none"
         onClick={(event) => event.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -245,6 +290,10 @@ export function CalculatorModal({
         >
           Usar resultado
         </button>
+
+        <p className="mt-2 text-center text-xs text-slate-500">
+          Teclado: números, + − × ÷, Enter para calcular, Esc para fechar
+        </p>
       </div>
     </div>
   )

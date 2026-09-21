@@ -7,6 +7,7 @@ import {
   calculatorResultToMoneyInput,
   clearCalculatorDisplay,
   evaluateCalculatorDisplay,
+  keypadKeyFromKeyboard,
   normalizePastedExpression,
   pastedExpressionToMoneyInput,
   pressCalculatorKey,
@@ -98,6 +99,36 @@ describe('calculatorResultToMoneyInput', () => {
   it('formata resultado para input monetário brasileiro', () => {
     expect(calculatorResultToMoneyInput(375)).toBe('375,00')
     expect(calculatorResultToMoneyInput(1234.56)).toBe('1.234,56')
+  })
+})
+
+describe('keypadKeyFromKeyboard', () => {
+  it('mapeia números, operadores e vírgula do teclado', () => {
+    expect(keypadKeyFromKeyboard('7')).toBe('7')
+    expect(keypadKeyFromKeyboard('+')).toBe('+')
+    expect(keypadKeyFromKeyboard('-')).toBe('-')
+    expect(keypadKeyFromKeyboard('*')).toBe('*')
+    expect(keypadKeyFromKeyboard('/')).toBe('/')
+    expect(keypadKeyFromKeyboard('x')).toBe('*')
+    expect(keypadKeyFromKeyboard('×')).toBe('*')
+    expect(keypadKeyFromKeyboard('÷')).toBe('/')
+    expect(keypadKeyFromKeyboard(',')).toBe('.')
+    expect(keypadKeyFromKeyboard('.')).toBe('.')
+  })
+
+  it('mapeia teclas de ação', () => {
+    expect(keypadKeyFromKeyboard('Enter')).toBe('equals')
+    expect(keypadKeyFromKeyboard('=')).toBe('equals')
+    expect(keypadKeyFromKeyboard('Backspace')).toBe('backspace')
+    expect(keypadKeyFromKeyboard('Delete')).toBe('C')
+    expect(keypadKeyFromKeyboard('c')).toBe('C')
+    expect(keypadKeyFromKeyboard('C')).toBe('C')
+  })
+
+  it('ignora teclas sem função na calculadora', () => {
+    expect(keypadKeyFromKeyboard('Escape')).toBeNull()
+    expect(keypadKeyFromKeyboard('a')).toBeNull()
+    expect(keypadKeyFromKeyboard('ArrowUp')).toBeNull()
   })
 })
 
