@@ -74,4 +74,32 @@ describe('MoneyInputWithCalculator', () => {
       screen.queryByRole('dialog', { name: 'Calculadora' }),
     ).not.toBeInTheDocument()
   })
+
+  it('aplica cálculo colado direto no campo', async () => {
+    const user = userEvent.setup()
+    const onChange = vi.fn()
+
+    render(<MoneyInputWithCalculator value="" onChange={onChange} />)
+
+    await user.click(screen.getByLabelText('Valor (R$)'))
+    await user.paste('1.500,00 + 250')
+
+    expect(onChange).toHaveBeenCalledWith('1.750,00')
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Cálculo colado: 1.500,00 + 250 = 1.750,00',
+    )
+  })
+
+  it('mantém a colagem quando não é um cálculo', async () => {
+    const user = userEvent.setup()
+    const onChange = vi.fn()
+
+    render(<MoneyInputWithCalculator value="" onChange={onChange} />)
+
+    await user.click(screen.getByLabelText('Valor (R$)'))
+    await user.paste('250,00')
+
+    expect(onChange).toHaveBeenCalledWith('250,00')
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+  })
 })

@@ -7,6 +7,8 @@ import {
   calculatorResultToMoneyInput,
   clearCalculatorDisplay,
   evaluateCalculatorDisplay,
+  normalizePastedExpression,
+  pastedExpressionToMoneyInput,
   pressCalculatorKey,
 } from './calculator'
 
@@ -96,5 +98,37 @@ describe('calculatorResultToMoneyInput', () => {
   it('formata resultado para input monetário brasileiro', () => {
     expect(calculatorResultToMoneyInput(375)).toBe('375,00')
     expect(calculatorResultToMoneyInput(1234.56)).toBe('1.234,56')
+  })
+})
+
+describe('normalizePastedExpression', () => {
+  it('converte números brasileiros para o formato do cálculo', () => {
+    expect(normalizePastedExpression('1.500,00 + 250')).toBe('1500.00+250')
+  })
+
+  it('ignora textos que não são cálculos', () => {
+    expect(normalizePastedExpression('250,00')).toBeNull()
+    expect(normalizePastedExpression('paguei 250 reais')).toBeNull()
+    expect(normalizePastedExpression('')).toBeNull()
+  })
+})
+
+describe('pastedExpressionToMoneyInput', () => {
+  it('calcula expressões coladas e formata como valor', () => {
+    expect(pastedExpressionToMoneyInput('1500+250')).toBe('1.750,00')
+    expect(pastedExpressionToMoneyInput('1.500,00 + 250,50')).toBe('1.750,50')
+  })
+
+  it('aceita x, ×, ÷, = e R$ vindos da colagem', () => {
+    expect(pastedExpressionToMoneyInput('12 x 12 =')).toBe('144,00')
+    expect(pastedExpressionToMoneyInput('100 ÷ 4')).toBe('25,00')
+    expect(pastedExpressionToMoneyInput('R$ 1.234,56 - 34,56')).toBe('1.200,00')
+  })
+
+  it('retorna null quando a colagem não é um cálculo válido', () => {
+    expect(pastedExpressionToMoneyInput('250,00')).toBeNull()
+    expect(pastedExpressionToMoneyInput('paguei 250 reais')).toBeNull()
+    expect(pastedExpressionToMoneyInput('10/0')).toBeNull()
+    expect(pastedExpressionToMoneyInput('100-250')).toBeNull()
   })
 })

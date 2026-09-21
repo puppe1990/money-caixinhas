@@ -60,4 +60,38 @@ describe('EditCaixinhaModal', () => {
       observacao: 'Texto atualizado',
     })
   })
+
+  it('aplica cálculo colado na meta', async () => {
+    const user = userEvent.setup()
+    const onSave = vi.fn().mockResolvedValue(undefined)
+
+    render(
+      <EditCaixinhaModal
+        caixinha={caixinha}
+        open
+        isSaving={false}
+        isDeleting={false}
+        error={null}
+        onClose={vi.fn()}
+        onSave={onSave}
+        onDelete={vi.fn()}
+      />,
+    )
+
+    const metaField = screen.getByLabelText('Meta total (R$)')
+    await user.click(metaField)
+    await user.paste('1.500,00 + 250')
+
+    expect(metaField).toHaveValue('1.750,00')
+
+    await user.click(screen.getByRole('button', { name: 'Salvar alterações' }))
+
+    expect(onSave).toHaveBeenCalledWith({
+      name: 'Viagem',
+      targetAmount: '1.750,00',
+      month: 6,
+      year: 2026,
+      observacao: 'Texto inicial',
+    })
+  })
 })

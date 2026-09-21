@@ -4,6 +4,8 @@ import { ModalCloseButton, ModalShell } from '#/components/ModalShell'
 import { formatCentsToMoneyInput, periodLabel } from '#/lib/caixinhas/domain'
 import type { CaixinhaProgress } from '#/lib/caixinhas/types'
 
+import { MoneyInputWithCalculator } from './MoneyInputWithCalculator'
+
 const MONTHS = [
   { value: 1, label: 'Janeiro' },
   { value: 2, label: 'Fevereiro' },
@@ -124,15 +126,20 @@ export function EditCaixinhaModal({
           />
         </label>
 
-        <label className="block space-y-1 text-sm">
-          <span className="font-medium text-slate-700">Meta total (R$)</span>
-          <input
-            className="w-full rounded-lg border border-slate-300 px-3 py-2"
+        <div className="block space-y-1 text-sm">
+          <label
+            htmlFor="edit-caixinha-meta"
+            className="font-medium text-slate-700"
+          >
+            Meta total (R$)
+          </label>
+          <MoneyInputWithCalculator
+            id="edit-caixinha-meta"
             value={targetAmount}
-            onChange={(event) => setTargetAmount(event.target.value)}
+            onChange={setTargetAmount}
             required
           />
-        </label>
+        </div>
 
         <label className="block space-y-1 text-sm">
           <span className="font-medium text-slate-700">
